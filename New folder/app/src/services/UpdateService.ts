@@ -3,7 +3,7 @@
  * Checks for new application versions from the API server.
  */
 
-const API_BASE_URL = 'http://localhost:3000'; // Change to production domain before deployment
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export interface UpdateInfo {
     available: boolean;
