@@ -116,7 +116,8 @@
       {
         "from": "node_modules/better-sqlite3",
         "to": "app/node_modules/better-sqlite3"
-      }
+      },
+      ".env"
     ],
     "win": {
       "target": [
