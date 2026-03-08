@@ -90,6 +90,12 @@ const additionalFeatures = [
 
 import { InteractiveCard } from '@/components/InteractiveCard'
 
+import { Badge } from '@/components/ui/badge'
+
+const paymentMethods = [
+  'mBOB', 'BNB', 'TPay', 'DrukPNB', 'BDBL', 'DKBank', 'Cash', 'Card', 'Transfer', 'Credit'
+]
+
 export const metadata = {
   title: 'Features - Dhisum Tseyig',
   description: 'Explore the powerful features of Dhisum Tseyig — the complete POS and accounting solution for Bhutanese businesses.',
@@ -163,24 +169,32 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* Payment Methods */}
-      <section className="py-10 md:py-14">
-        <div className="container px-4 md:px-6">
-          <div className="bg-gradient-to-r from-bhutan-maroon to-bhutan-maroon-dark rounded-2xl md:rounded-[2rem] p-5 md:p-10 text-white relative overflow-hidden shadow-xl">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-bhutan-gold opacity-10 blur-2xl -mr-20 -mt-20" />
-            <div className="relative z-10">
-              <h2 className="text-base md:text-xl font-black mb-2 tracking-tight">Bhutanese Payment Integration</h2>
-              <p className="text-white/70 max-w-lg mb-5 text-[10px] md:text-xs font-medium">
-                Support for all major Bhutanese payment platforms.
-              </p>
-              <div className="flex flex-wrap gap-1.5 md:gap-2">
-                {['mBOB', 'BNB', 'TPay', 'DrukPNB', 'BDBL', 'DKBank', 'Cash', 'Transfer', 'Card', 'Credit'].map((method) => (
-                  <span key={method} className="bg-white/10 backdrop-blur-md border border-white/10 text-white text-[8px] md:text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-lg">
+      {/* Payment Methods Marquee */}
+      <section className="py-16 md:py-24 border-y bg-white overflow-hidden relative">
+        <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-white via-transparent to-transparent z-10 pointer-events-none w-20 md:w-40" />
+        <div className="absolute inset-y-0 right-0 bg-gradient-to-l from-white via-transparent to-transparent z-10 pointer-events-none w-20 md:w-40" />
+
+        <div className="container px-4 md:px-6 mb-12 text-center relative z-20">
+          <Badge className="bg-bhutan-maroon/10 text-bhutan-maroon border-none px-4 py-2 rounded-full font-black tracking-[0.2em] uppercase text-[10px] mb-4">Registry Hub</Badge>
+          <h2 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">Bhutanese Payment Integration</h2>
+          <p className="text-xs md:text-base text-slate-500 font-bold mt-2">Support for all major Bhutanese payment platforms.</p>
+        </div>
+
+        <div className="relative flex overflow-x-hidden">
+          <div className="animate-marquee whitespace-nowrap flex items-center gap-4 md:gap-8 min-w-full py-4">
+            {[...paymentMethods, ...paymentMethods, ...paymentMethods].map((method, idx) => (
+              <div
+                key={`${method}-${idx}`}
+                className="group relative"
+              >
+                <div className="glow-card lighting-glow bg-slate-50 px-6 md:px-10 py-4 md:py-7 rounded-2xl md:rounded-[2rem] border border-slate-100 flex items-center gap-3 md:gap-5 transition-all duration-300 shadow-sm">
+                  <div className="h-2.5 w-2.5 rounded-full bg-bhutan-gold animate-pulse shadow-[0_0_10px_rgba(255,215,0,0.8)]" />
+                  <span className="text-sm md:text-2xl font-black text-slate-800 tracking-tighter uppercase group-hover:text-bhutan-maroon transition-colors">
                     {method}
                   </span>
-                ))}
+                </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
