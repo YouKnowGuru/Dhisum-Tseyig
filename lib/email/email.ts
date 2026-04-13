@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer'
 
-const BASE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+const BASE_URL = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'
 const isDev = process.env.NODE_ENV === 'development'
 
 /**
