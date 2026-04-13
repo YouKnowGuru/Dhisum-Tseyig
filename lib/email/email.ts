@@ -1,6 +1,10 @@
 import nodemailer from 'nodemailer'
 
-const BASE_URL = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'
+// Fixed: Properly detect production environment (Vercel)
+// Priority: 1. VERCEL_URL (production), 2. NEXTAUTH_URL (custom), 3. localhost (dev fallback)
+const BASE_URL = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : process.env.NEXTAUTH_URL || 'http://localhost:3000'
 const isDev = process.env.NODE_ENV === 'development'
 
 /**

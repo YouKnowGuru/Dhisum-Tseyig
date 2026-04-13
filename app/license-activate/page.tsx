@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Key, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
+import { apiRequest } from '@/lib/utils/api'
 
 export default function LicenseActivatePage() {
   const [licenseKey, setLicenseKey] = useState('')
@@ -18,9 +19,8 @@ export default function LicenseActivatePage() {
     setStatus('loading')
 
     try {
-      const resp = await fetch('/api/license/activate', {
+      const resp = await apiRequest('/api/license/activate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ licenseKey }),
       })
       const data = await resp.json()
@@ -29,11 +29,12 @@ export default function LicenseActivatePage() {
         setMessage('License activated successfully!')
       } else {
         setStatus('error')
-        setMessage(data.error || 'Activation failed.')
+        setMessage(data.error || data.message || 'Activation failed.')
       }
     } catch (err) {
       setStatus('error')
-      setMessage('An error occurred during activation.')
+      setMessage('An error occurred during activation. Please check your internet connection and try again.')
+      console.error('License activation error:', err)
     }
   }
 

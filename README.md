@@ -168,6 +168,41 @@ Example: `DTS-9F3A-K4LM-72PQ`
 
 For support, email support@dhisumtseyig.com or call +975 17XX XXXX.
 
+## License Activation for POS Desktop App
+
+**Good News!** The POS desktop app now automatically connects to your Vercel server. No environment variable configuration needed!
+
+### How It Works
+
+The code automatically detects where it's running:
+- **On Vercel website** (browser): Uses relative URLs like `/api/license/activate`
+- **In POS desktop app**: Uses full URL `https://dhisum-tseyig.vercel.app/api/license/activate`
+
+### Troubleshooting License Activation Issues
+
+If license activation is still failing:
+
+1. **Verify MongoDB Connection**:
+   - Check that your MongoDB connection string is correct in Vercel env vars
+   - Test the connection in Vercel logs
+
+2. **Test API Endpoints Directly**:
+   ```bash
+   curl -X POST https://dhisum-tseyig.vercel.app/api/license/activate \
+     -H "Content-Type: application/json" \
+     -d '{"licenseKey":"DTS-TEST-XXXX-XXXX"}'
+   ```
+
+3. **Check Vercel Logs**:
+   - Go to Vercel Dashboard → Your Project → Logs
+   - Look for any errors during activation
+
+4. **Run Diagnostic Script**:
+   ```bash
+   node scripts/test-license-api.js
+   ```
+   This will test if your Vercel server is responding correctly.
+
 ## License
 
 Copyright (c) 2024 Dhisum Tseyig. All rights reserved.
