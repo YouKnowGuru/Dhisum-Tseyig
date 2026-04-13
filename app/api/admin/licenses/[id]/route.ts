@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import connectDB from '@/lib/db/mongodb'
@@ -9,7 +10,7 @@ import { apiRateLimit } from '@/lib/rate-limit/rate-limit'
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse> {
   const { id } = await params;
   try {
     // Check authentication
@@ -19,12 +20,20 @@ export async function GET(
     }
 
     // Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }
 
     await connectDB()
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: 'Invalid license ID format' },
+        { status: 400 }
+      )
+    }
 
     const license = await License.findById(id)
 
@@ -49,7 +58,7 @@ export async function GET(
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse> {
   const { id } = await params;
   try {
     // Check authentication
@@ -59,12 +68,20 @@ export async function DELETE(
     }
 
     // Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }
 
     await connectDB()
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: 'Invalid license ID format' },
+        { status: 400 }
+      )
+    }
 
     const license = await License.findByIdAndDelete(id)
 

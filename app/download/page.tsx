@@ -10,23 +10,23 @@ const downloads = [
   {
     id: 'setup',
     title: 'Windows Installer',
-    description: 'Recommended for most users. Full installation with all features including POS, accounting, and GST modules.',
+    description: 'Recommended. Full installation with all features.',
     icon: Monitor,
-    filename: 'Dhisum.Tseyig.Setup.1.0.0.exe',
+    filename: 'Dhisum.Tseyig.Setup.exe',
     size: '~210 MB',
     requirements: [
       'Windows 10 or later',
       '4 GB RAM minimum',
       '200 MB free disk space',
-      'No internet required after install',
+      'No internet needed after install',
     ],
   },
   {
     id: 'portable',
     title: 'Portable Version',
-    description: 'Run directly from USB drive without installation. Perfect for trying on multiple machines.',
+    description: 'Run from USB without installation. Good for trying on multiple machines.',
     icon: FileArchive,
-    filename: 'Dhisum.Tseyig.1.0.0.exe',
+    filename: 'Dhisum.Tseyig.exe',
     size: '~110 MB',
     requirements: [
       'Windows 10 or later',
@@ -37,10 +37,33 @@ const downloads = [
 ]
 
 const highlights = [
-  'Offline-first — no internet required',
-  'All 9 modules included',
+  'Works offline — no internet required',
+  'All 20+ features included',
   '7-day free trial',
-  'Automatic backup support',
+  'Backup & restore support',
+]
+
+const modulesIncluded = [
+  'Dashboard & Analytics',
+  'POS Sales with Barcode',
+  'Inventory Management',
+  'Customer & Supplier CRM',
+  'Purchase Orders',
+  'Quotations',
+  'Transaction Ledger',
+  'GST Compliance',
+  'Financial Reports',
+  'Invoice & Receipt Printing',
+  'Expense Tracker',
+  'Recurring Transactions',
+  'Refunds & Returns',
+  'Employee & Payroll',
+  'Barcode Management',
+  'Tiered Pricing',
+  'Aged Reports',
+  'Audit Trail',
+  'Backup & Restore',
+  'Branch Management',
 ]
 
 export default function DownloadPage() {
@@ -63,7 +86,7 @@ export default function DownloadPage() {
         link.click()
         document.body.removeChild(link)
       } else {
-        setError('Failed to get download link. Please try again.')
+        setError('Failed to get download link. Please try again or contact us.')
       }
     } catch (err) {
       setError('An error occurred. Please try again later.')
@@ -79,7 +102,7 @@ export default function DownloadPage() {
         <div className="container text-center relative z-10 px-4 md:px-6">
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black mb-3 tracking-tight leading-tight">Download Dhisum Tseyig</h1>
           <p className="text-xs md:text-sm text-white/70 max-w-md mx-auto font-medium leading-relaxed">
-            Get the latest version of our premium POS & accounting software.
+            Get the full software free for 7 days. No credit card needed.
           </p>
           <div className="flex flex-wrap justify-center gap-2 md:gap-3 mt-5">
             {highlights.map((item) => (
@@ -148,20 +171,10 @@ export default function DownloadPage() {
             <div className="bg-slate-50 rounded-2xl p-5 md:p-8 border border-slate-100 relative overflow-hidden">
               <h3 className="text-sm md:text-base font-black mb-4 flex items-center gap-2 text-slate-900 tracking-tight">
                 <Shield className="h-4 w-4 text-bhutan-maroon" />
-                What's Included
+                What's Included — 20 Modules
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4">
-                {[
-                  'Dashboard & Analytics',
-                  'POS Sales Module',
-                  'Inventory Management',
-                  'Customer & Supplier CRM',
-                  'Transaction Ledger',
-                  'GST Compliance',
-                  'Financial Reports',
-                  'Invoice Printing',
-                  'Backup & Restore',
-                ].map((item) => (
+                {modulesIncluded.map((item) => (
                   <div key={item} className="flex items-center gap-2 text-[10px] md:text-xs font-bold text-slate-600">
                     <Check className="h-3 w-3 text-bhutan-maroon flex-shrink-0" />
                     <span>{item}</span>

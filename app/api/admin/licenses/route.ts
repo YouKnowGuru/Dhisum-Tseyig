@@ -10,8 +10,15 @@ import { generateLicenseKey } from '@/lib/utils'
 import { apiRateLimit } from '@/lib/rate-limit/rate-limit'
 import { ZodError } from 'zod'
 
+/**
+ * Sanitize input for use in MongoDB regex to prevent ReDoS attacks
+ */
+function escapeRegex(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 // GET /api/admin/licenses - Get all licenses
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     // Check authentication
     const session = await getServerSession(authOptions)
@@ -20,7 +27,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }
@@ -47,11 +54,13 @@ export async function GET(req: NextRequest) {
     }
 
     if (search) {
+      // Sanitize search input to prevent regex injection/ReDoS
+      const sanitizedSearch = escapeRegex(search)
       query.$or = [
-        { licenseKey: { $regex: search, $options: 'i' } },
-        { customerName: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { companyName: { $regex: search, $options: 'i' } },
+        { licenseKey: { $regex: sanitizedSearch, $options: 'i' } },
+        { customerName: { $regex: sanitizedSearch, $options: 'i' } },
+        { email: { $regex: sanitizedSearch, $options: 'i' } },
+        { companyName: { $regex: sanitizedSearch, $options: 'i' } },
       ]
     }
 
@@ -85,7 +94,7 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/admin/licenses - Create new license
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Check authentication
     const session = await getServerSession(authOptions)
@@ -94,7 +103,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }
@@ -190,7 +199,7 @@ export async function POST(req: NextRequest) {
 }
 
 // PATCH /api/admin/licenses - Update license
-export async function PATCH(req: NextRequest) {
+export async function PATCH(req: NextRequest): Promise<NextResponse> {
   try {
     // Check authentication
     const session = await getServerSession(authOptions)
@@ -199,7 +208,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }

@@ -230,7 +230,13 @@ export default function CreateLicensePage() {
                   id="maxUsers"
                   type="number"
                   value={formData.maxUsers}
-                  onChange={(e) => setFormData({ ...formData, maxUsers: parseInt(e.target.value) })}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    setFormData({
+                      ...formData,
+                      maxUsers: isNaN(val) || val < 1 ? 1 : val
+                    });
+                  }}
                   min={1}
                   required
                 />

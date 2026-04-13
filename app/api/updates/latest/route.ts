@@ -5,10 +5,10 @@ import Update, { IUpdate } from '@/lib/models/Update'
 import { apiRateLimit } from '@/lib/rate-limit/rate-limit'
 
 // GET /api/updates/latest - Get latest update
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     // Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }

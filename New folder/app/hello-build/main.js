@@ -1,1 +1,0 @@
-const {app, BrowserWindow} = require('electron'); app.whenReady().then(() => { new BrowserWindow().loadURL('https://google.com'); });

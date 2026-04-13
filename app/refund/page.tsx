@@ -1,40 +1,43 @@
-'use client'
-
 import { Undo2, XCircle, CreditCard, RotateCcw, AlertTriangle, HelpCircle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+
+export const metadata = {
+    title: 'Refund Policy - Dhisum Tseyig',
+    description: 'Refund and cancellation policy for Dhisum Tseyig POS software.',
+}
 
 export default function RefundPage() {
     const sections = [
         {
             icon: Undo2,
-            title: 'Return Eligibility',
-            content: 'Since we provide a 7-day free trial with full access, we expect you to evaluate the software before purchase. Refund requests must be submitted within 14 days of the initial purchase date.',
+            title: 'Refund Eligibility',
+            content: 'We offer a 7-day free trial so you can test the software before buying. If you purchase a license, refund requests must be made within 14 days of purchase.',
         },
         {
             icon: XCircle,
-            title: 'Cancellation Policy',
-            content: 'You can cancel your subscription renewal at any time. Once cancelled, your license will remain active until the end of your current paid term (1, 2, or 3 years) and will not automatically renew.',
+            title: 'Cancelling Renewal',
+            content: 'You can cancel auto-renewal anytime. Your license will stay active until the end of your current paid term and will not renew automatically.',
         },
         {
             icon: CreditCard,
-            title: 'Processing Refunds',
-            content: 'Approved refunds are processed via the original payment method. Depending on your bank, it may take 5–10 business days for the funds to appear in your account.',
+            title: 'How Refunds Work',
+            content: 'Approved refunds are returned through the original payment method. It may take 5-10 business days for the amount to appear in your account.',
         },
         {
             icon: RotateCcw,
             title: 'Non-Refundable Items',
-            content: 'Initial setup fees and specialized remote installation services are non-refundable once the service has been performed. License keys that have been extensively used are also non-refundable.',
+            content: 'Remote setup fees and installation services are non-refundable once completed. License keys that have been used extensively are also non-refundable.',
         },
         {
             icon: AlertTriangle,
-            title: 'Condition for Refund',
-            content: 'Refunds are typically granted if the software fails to function as advertised on supported hardware and our technical support team is unable to resolve the issue within a reasonable timeframe.',
+            title: 'When Refunds Are Granted',
+            content: 'Refunds are typically approved if the software does not work as described on your hardware and our support team cannot fix the issue.',
         },
         {
             icon: HelpCircle,
-            title: 'How to Request',
-            content: 'To request a refund, please email our billing department at dhisumtseyig@gmail.com with your Order ID, License Key, and a detailed reason for the request.',
+            title: 'How to Request a Refund',
+            content: 'Email us at dhisumtseyig@gmail.com with your Order ID, License Key, and reason for the refund. We will review and respond within 3 business days.',
         },
     ]
 
@@ -48,7 +51,7 @@ export default function RefundPage() {
                         <Badge className="bg-bhutan-gold text-bhutan-maroon-dark border-none px-4 py-1.5 rounded-full font-black tracking-widest uppercase text-[10px]">Return Policy</Badge>
                         <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">Refund Policy</h1>
                         <p className="text-sm md:text-lg text-white/60 font-medium leading-relaxed">
-                            Clear rules for returns, technical issues, and subscription cancellations. We value transparency and fairness in our billing.
+                            Fair and transparent refund rules. Try free for 7 days before you buy.
                         </p>
                     </div>
                 </div>
@@ -75,13 +78,13 @@ export default function RefundPage() {
                         </div>
 
                         <div className="mt-16 p-8 md:p-12 bg-white rounded-[3rem] border border-slate-100 shadow-sm space-y-6">
-                            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Technical Resolution First</h2>
+                            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Try Before You Buy</h2>
                             <div className="space-y-4 text-slate-600 font-medium text-sm leading-relaxed">
                                 <p>
-                                    Before requesting a refund, we highly recommend contacting our support team. Most technical issues can be resolved remotely in minutes, and we are dedicated to ensuring your business stays operational.
+                                    We recommend using the 7-day free trial first. If you face any issues, contact our support team before requesting a refund. Most problems can be fixed quickly.
                                 </p>
                                 <div className="pt-8 border-t border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    Updated: March 2026
+                                    Updated: April 2026
                                 </div>
                             </div>
                         </div>

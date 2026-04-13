@@ -3,10 +3,10 @@ import { getDownloadUrl, getPublicDownloadUrl } from '@/lib/s3/s3-client'
 import { apiRateLimit } from '@/lib/rate-limit/rate-limit'
 
 // GET /api/download - Get download URL for installer
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     // Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }

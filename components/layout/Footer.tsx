@@ -34,12 +34,16 @@ const footerLinks = {
     { href: '/features', label: 'Inventory Hub' },
     { href: '/features', label: 'GST Core' },
     { href: '/features', label: 'Accounting' },
+    { href: '/features', label: 'Reports' },
+    { href: '/features', label: 'Payroll' },
   ],
   support: [
     { href: '/contact', label: 'Contact Us' },
+    { href: '/security', label: 'Security' },
     { href: '/license-activate', label: 'Activate License' },
     { href: '/docs', label: 'User Guides' },
-    { href: '/docs', label: 'Live FAQ' },
+    { href: '/docs', label: 'FAQ' },
+    { href: '/refund', label: 'Refund Policy' },
   ],
   legal: [
     { href: '/privacy', label: 'Privacy Policy' },
@@ -50,10 +54,10 @@ const footerLinks = {
 }
 
 const socials = [
-  { icon: Facebook, href: '#', label: 'Facebook', color: 'hover:text-blue-500' },
-  { icon: Twitter, href: '#', label: 'Twitter', color: 'hover:text-sky-400' },
-  { icon: Instagram, href: '#', label: 'Instagram', color: 'hover:text-pink-500' },
-  { icon: Github, href: '#', label: 'Github', color: 'hover:text-white' },
+  { icon: Facebook, href: 'https://facebook.com/dhisumtseyig', label: 'Facebook', color: 'hover:text-blue-500' },
+  { icon: Twitter, href: 'https://twitter.com/dhisumtseyig', label: 'Twitter', color: 'hover:text-sky-400' },
+  { icon: Instagram, href: 'https://instagram.com/dhisumtseyig', label: 'Instagram', color: 'hover:text-pink-500' },
+  { icon: Github, href: 'https://github.com/dhisumtseyig', label: 'Github', color: 'hover:text-white' },
 ]
 
 export default function Footer() {
@@ -83,11 +87,11 @@ export default function Footer() {
                 </span>
               </Link>
               <p className="text-sm text-slate-400 max-w-sm leading-relaxed font-medium">
-                The Kingdom's most advanced ERP & POS ecosystem. Engineered for the modern Bhutanese economy with offline-first, GST-ready precision.
+                The Kingdom&apos;s most advanced POS &amp; accounting software. Built for Bhutanese businesses — offline-first, GST-ready.
               </p>
             </div>
 
-            <div className="space-y-4 max-w-sm">
+            <div className="space-y-4">
               <h4 className="text-xs font-black uppercase tracking-[0.2em] text-bhutan-gold">Stay Updated</h4>
               <div className="relative group">
                 <Input
@@ -101,7 +105,7 @@ export default function Footer() {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-[10px] text-slate-500 font-bold px-1">Join 500+ businesses receiving our latest updates.</p>
+              <p className="text-[10px] text-slate-500 font-bold px-1">Join Bhutanese businesses receiving our latest updates.</p>
             </div>
 
             <div className="flex items-center gap-4">
@@ -185,7 +189,7 @@ export default function Footer() {
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-0.5">Deployment</p>
-              <p className="text-sm font-black text-white uppercase tracking-tight">Active Kingdom Wide</p>
+              <p className="text-sm font-black text-white uppercase tracking-tight">Active Across Bhutan</p>
             </div>
           </div>
           <div className="flex items-center gap-4 px-6 md:border-r border-white/5">
@@ -194,7 +198,7 @@ export default function Footer() {
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-0.5">Security</p>
-              <p className="text-sm font-black text-white uppercase tracking-tight">Enterprise Grade SSL</p>
+              <p className="text-sm font-black text-white uppercase tracking-tight">Offline-First, Data Stays With You</p>
             </div>
           </div>
           <div className="flex items-center gap-4 px-6">
@@ -203,7 +207,7 @@ export default function Footer() {
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-0.5">Payments</p>
-              <p className="text-sm font-black text-white uppercase tracking-tight">mBOB, TPay & More</p>
+              <p className="text-sm font-black text-white uppercase tracking-tight">mBOB, TPay, BNB & More</p>
             </div>
           </div>
         </div>
@@ -215,7 +219,7 @@ export default function Footer() {
               &copy; {new Date().getFullYear()} Dhisum Tseyig. All Rights Reserved.
             </p>
             <p className="text-[11px] font-black text-white/60 tracking-tight">
-              Engineered with Precision in the Heart of the Himalayas — <span className="text-bhutan-gold">Tsirang, Bhutan.</span>
+              Built in the Heart of the Himalayas — <span className="text-bhutan-gold">Tsirang, Bhutan.</span>
             </p>
           </div>
 

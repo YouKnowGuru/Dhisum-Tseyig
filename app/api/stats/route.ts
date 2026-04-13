@@ -8,7 +8,7 @@ import { authOptions } from '@/lib/auth/auth.config'
 import { apiRateLimit } from '@/lib/rate-limit/rate-limit'
 
 // GET /api/stats - Get dashboard statistics
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     // Check authentication
     const session = await getServerSession(authOptions)
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }

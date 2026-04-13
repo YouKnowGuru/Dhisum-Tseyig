@@ -21,10 +21,10 @@ const transporter = nodemailer.createTransport({
 })
 
 // POST /api/contact - Submit contact form
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // 1. Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }

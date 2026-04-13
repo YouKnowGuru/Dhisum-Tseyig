@@ -7,9 +7,9 @@ import { apiRateLimit } from '@/lib/rate-limit/rate-limit'
 
 // DELETE /api/updates/[id] - Delete update (admin only)
 export async function DELETE(
-    req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) {
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
     const { id } = await params;
     try {
         // Check authentication
@@ -18,13 +18,13 @@ export async function DELETE(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        // Apply rate limiting
-        const rateLimitResponse = apiRateLimit(req)
-        if (rateLimitResponse) {
-            return rateLimitResponse
-        }
+    // Apply rate limiting
+    const rateLimitResponse = await apiRateLimit(req)
+    if (rateLimitResponse) {
+      return rateLimitResponse
+    }
 
-        await connectDB()
+    await connectDB()
 
         const update = await Update.findByIdAndDelete(id)
 

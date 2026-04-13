@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Book,
-  Video,
   FileText,
   MessageCircle,
   ChevronRight,
@@ -12,89 +11,146 @@ import {
   BarChart3,
   Users,
   Settings,
+  Receipt,
+  CreditCard,
+  QrCode,
+  RefreshCw,
+  Briefcase,
+  Tag,
+  Building2,
+  ArrowLeftRight,
+  DollarSign,
+  Clock,
+  Shield,
+  Printer
 } from 'lucide-react'
 
 const docCategories = [
   {
     icon: Book,
     title: 'Getting Started',
-    description: 'Learn the basics of setting up and using Dhisum Tseyig.',
+    description: 'Install, activate license, and set up your business.',
     links: [
-      { title: 'Installation Guide', href: '#' },
-      { title: 'First Time Setup & Company Config', href: '#' },
-      { title: 'Creating Your First Sale', href: '#' },
-      { title: 'Adding Products to Inventory', href: '#' },
+      { title: 'System Requirements', href: '/docs#requirements' },
+      { title: 'Download & Install', href: '/download' },
+      { title: 'Activate Your License', href: '/license-activate' },
+      { title: 'Company Settings Setup', href: '/docs#settings' },
     ],
   },
   {
     icon: ShoppingCart,
-    title: 'POS Operations',
-    description: 'Master the point-of-sale interface for quick checkouts.',
+    title: 'POS Sales',
+    description: 'Process sales, scan barcodes, manage the cart.',
     links: [
-      { title: 'Processing a Sale', href: '#' },
-      { title: 'Cart Management & Discounts', href: '#' },
-      { title: 'Payment Methods (mBOB, BNB, TPay...)', href: '#' },
-      { title: 'Invoice & Receipt Printing', href: '#' },
+      { title: 'Making a Sale', href: '/docs#pos-sale' },
+      { title: 'Barcode Scanning', href: '/docs#pos-barcode' },
+      { title: 'Hold & Resume Cart', href: '/docs#pos-hold' },
+      { title: 'Payment Methods', href: '/docs#pos-payments' },
     ],
   },
   {
     icon: Package,
-    title: 'Inventory Management',
-    description: 'Track stock, manage categories, and handle alerts.',
+    title: 'Inventory',
+    description: 'Add products, track stock, manage categories.',
     links: [
-      { title: 'Adding & Editing Products', href: '#' },
-      { title: 'Categories & Units', href: '#' },
-      { title: 'Stock Adjustments', href: '#' },
-      { title: 'Low Stock Alerts', href: '#' },
+      { title: 'Add Products', href: '/docs#inventory-add' },
+      { title: 'Categories & Units', href: '/docs#inventory-categories' },
+      { title: 'Stock Adjustments', href: '/docs#inventory-adjust' },
+      { title: 'Barcode Management', href: '/docs#inventory-barcode' },
+    ],
+  },
+  {
+    icon: Users,
+    title: 'Customers & Suppliers',
+    description: 'Manage contacts, credit limits, and ledgers.',
+    links: [
+      { title: 'Add Customers & Suppliers', href: '/docs#contacts-add' },
+      { title: 'Credit Limits', href: '/docs#contacts-credit' },
+      { title: 'View Customer Ledger', href: '/docs#contacts-ledger' },
+      { title: 'Customer Statements', href: '/docs#contacts-statement' },
     ],
   },
   {
     icon: Calculator,
     title: 'GST Compliance',
-    description: 'Understand GST calculation and returns filing.',
+    description: 'GST calculation, monthly returns, filing.',
     links: [
-      { title: 'Understanding 5% GST', href: '#' },
-      { title: 'Input vs Output Tax', href: '#' },
-      { title: 'Generating GSTR Reports', href: '#' },
-      { title: 'Filing Status Tracking', href: '#' },
+      { title: 'How GST Works', href: '/docs#gst-overview' },
+      { title: 'Monthly GST Summary', href: '/docs#gst-summary' },
+      { title: 'Generate GST Return', href: '/docs#gst-return' },
+      { title: 'GST Filing Status', href: '/docs#gst-status' },
     ],
   },
   {
     icon: BarChart3,
-    title: 'Reports & Analytics',
-    description: 'Generate financial reports and business insights.',
+    title: 'Reports',
+    description: 'Financial reports and business analytics.',
     links: [
-      { title: 'Trial Balance', href: '#' },
-      { title: 'Profit & Loss Statement', href: '#' },
-      { title: 'Balance Sheet', href: '#' },
-      { title: 'Outstanding & Stock Reports', href: '#' },
+      { title: 'Trial Balance', href: '/docs#report-tb' },
+      { title: 'Profit & Loss', href: '/docs#report-pl' },
+      { title: 'Balance Sheet', href: '/docs#report-bs' },
+      { title: 'Stock & Outstanding', href: '/docs#report-stock' },
+    ],
+  },
+  {
+    icon: Receipt,
+    title: 'Purchase Orders & Quotations',
+    description: 'Order from suppliers and send price quotes.',
+    links: [
+      { title: 'Create Purchase Order', href: '/docs#po-create' },
+      { title: 'Receive Inventory', href: '/docs#po-receive' },
+      { title: 'Create Quotation', href: '/docs#quote-create' },
+      { title: 'Convert Quote to Sale', href: '/docs#quote-convert' },
+    ],
+  },
+  {
+    icon: ArrowLeftRight,
+    title: 'Transactions & Expenses',
+    description: 'Record payments, transfers, and expenses.',
+    links: [
+      { title: 'Receive & Make Payments', href: '/docs#txn-payments' },
+      { title: 'Fund Transfers', href: '/docs#txn-transfer' },
+      { title: 'Record Expenses', href: '/docs#txn-expenses' },
+      { title: 'Void Transactions', href: '/docs#txn-void' },
     ],
   },
   {
     icon: Settings,
-    title: 'Settings & Administration',
-    description: 'Configure your business and manage users.',
+    title: 'Settings & Admin',
+    description: 'Company info, users, backups, license.',
     links: [
-      { title: 'Company Settings', href: '#' },
-      { title: 'User Management & Roles', href: '#' },
-      { title: 'Backup & Restore', href: '#' },
-      { title: 'Invoice Customization', href: '#' },
+      { title: 'Company Settings', href: '/docs#settings-company' },
+      { title: 'User Management', href: '/docs#settings-users' },
+      { title: 'Backup & Restore', href: '/docs#settings-backup' },
+      { title: 'Cloud Backup (Drive/MEGA)', href: '/docs#settings-cloud' },
+    ],
+  },
+  {
+    icon: Shield,
+    title: 'Advanced Features',
+    description: 'Payroll, branches, tiered pricing, audit trail.',
+    links: [
+      { title: 'Employee & Payroll', href: '/docs#adv-payroll' },
+      { title: 'Branch Management', href: '/docs#adv-branches' },
+      { title: 'Tiered Pricing', href: '/docs#adv-pricing' },
+      { title: 'Audit Trail', href: '/docs#adv-audit' },
     ],
   },
 ]
 
 const quickLinks = [
-  { title: 'System Requirements', href: '#' },
+  { title: 'System Requirements', href: '/download' },
   { title: 'License Activation', href: '/license-activate' },
   { title: 'Download Software', href: '/download' },
-  { title: 'Pricing Information', href: '/pricing' },
+  { title: 'Pricing Plans', href: '/pricing' },
+  { title: 'Contact Support', href: '/contact' },
 ]
 
 import { InteractiveCard } from '@/components/InteractiveCard'
 
 export const metadata = {
-  title: 'Documentation - Dhisum Tseyig',
-  description: 'Learn how to use Dhisum Tseyig POS software with our comprehensive documentation covering POS, inventory, GST, reports, and more.',
+  title: 'Documentation - Dhisum Tseyig POS Software',
+  description: 'Learn how to use Dhisum Tseyig — POS, inventory, GST, reports, payroll, and more.',
 }
 
 export default function DocsPage() {
@@ -107,7 +163,7 @@ export default function DocsPage() {
           <div className="text-center max-w-2xl mx-auto">
             <h1 className="text-4xl font-bold mb-4 tracking-tight">Documentation</h1>
             <p className="text-lg text-white/70">
-              Everything you need to know about using Dhisum Tseyig — from setup to GST filing.
+              Step-by-step guides for every feature. From setup to daily operations.
             </p>
           </div>
         </div>
@@ -134,11 +190,15 @@ export default function DocsPage() {
       {/* Doc Categories */}
       <section className="py-16">
         <div className="container">
+          <div className="text-center max-w-xl mx-auto mb-10">
+            <h2 className="text-2xl font-black mb-3 tracking-tight">Browse by Topic</h2>
+            <p className="text-sm text-muted-foreground font-medium">Select a category to find detailed guides.</p>
+          </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {docCategories.map((category) => (
               <InteractiveCard key={category.title} className="p-6">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-bhutan-maroon/10 text-bhutan-maroon flex-shrink-0 group-hover:bg-bhutan-maroon group-hover:text-bhutan-gold transition-all duration-300 transform-style-3d group-hover:scale-110">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-bhutan-maroon/10 text-bhutan-maroon flex-shrink-0 group-hover:bg-bhutan-maroon group-hover:text-bhutan-gold transition-all duration-300">
                     <category.icon className="h-6 w-6" />
                   </div>
                   <div>
@@ -165,7 +225,7 @@ export default function DocsPage() {
         </div>
       </section>
 
-      {/* Getting Started Guide */}
+      {/* Quick Start Guide */}
       <section className="py-16 bg-muted/30">
         <div className="container">
           <div className="max-w-3xl mx-auto">
@@ -174,30 +234,30 @@ export default function DocsPage() {
               {[
                 {
                   step: 1,
-                  title: 'Download and Install',
-                  description: 'Download the latest version of Dhisum Tseyig for Windows. Run the installer and follow the on-screen instructions.',
+                  title: 'Download & Install',
+                  description: 'Download Dhisum Tseyig for Windows. Run the installer and follow the prompts. Takes about 2 minutes.',
                   link: { text: 'Go to Download Page', href: '/download' },
                 },
                 {
                   step: 2,
                   title: 'Activate Your License',
-                  description: 'When you first launch the application, enter your license key or start a 7-day free trial.',
+                  description: 'On first launch, enter your license key or start a 7-day free trial. No credit card needed.',
                   link: { text: 'Activate License', href: '/license-activate' },
                 },
                 {
                   step: 3,
                   title: 'Set Up Your Business',
-                  description: 'Go to Settings to configure your company name, address, trade license number, GST rate, and invoice format.',
+                  description: 'Go to Settings to enter your company name, address, trade license, and GST details.',
                 },
                 {
                   step: 4,
                   title: 'Add Products & Contacts',
-                  description: 'Add your products to inventory with purchase prices, selling prices, and GST rates. Create customer and supplier profiles.',
+                  description: 'Add your products with prices and GST settings. Create customer and supplier profiles.',
                 },
                 {
                   step: 5,
                   title: 'Start Selling',
-                  description: 'Use the POS screen to process sales. Search products, add to cart, select payment method (mBOB, cash, etc.), and print invoices.',
+                  description: 'Open the POS screen. Search or scan products, add to cart, select payment method, and print the invoice.',
                 },
               ].map((item) => (
                 <div key={item.step} className="bg-card rounded-xl p-6 border border-slate-100 hover:shadow-md transition-shadow">
@@ -232,11 +292,9 @@ export default function DocsPage() {
           <div className="bg-gradient-to-r from-bhutan-maroon to-bhutan-maroon-light rounded-2xl p-8 md:p-12 text-center text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-bhutan-gold opacity-10 blur-3xl -mr-32 -mt-32" />
             <div className="relative z-10">
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">
-                Need More Help?
-              </h2>
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">Need Help?</h2>
               <p className="text-white/70 max-w-lg mx-auto mb-6">
-                Our support team is available to help you get started and answer any questions about POS, inventory, GST, or reporting.
+                Contact our support team for setup help, GST questions, or any technical issue.
               </p>
               <Link href="/contact">
                 <button className="bg-bhutan-gold text-bhutan-maroon-dark px-6 py-3 rounded-xl font-bold hover:bg-white transition-colors shadow-xl">

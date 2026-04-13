@@ -1,40 +1,43 @@
-'use client'
-
 import { Shield, Lock, Eye, FileText, Database, Bell } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+
+export const metadata = {
+    title: 'Privacy Policy - Dhisum Tseyig',
+    description: 'How Dhisum Tseyig handles your data. Your business data stays on your computer.',
+}
 
 export default function PrivacyPage() {
     const sections = [
         {
             icon: Database,
-            title: 'Data Collection & Storage',
-            content: 'Dhisum Tseyig is an offline-first application. This means the vast majority of your business data (Sales, Inventory, Customer details) is stored locally on your device in an encrypted SQLite database. We do not have access to your daily business transactions.',
+            title: 'Where Your Data Is Stored',
+            content: 'Your business data — sales, inventory, customers — is stored on your own computer in a local SQLite database. We do not collect or store your daily business transactions on our servers.',
         },
         {
             icon: Shield,
-            title: 'Information We Collect',
-            content: 'We only collect minimal technical information required for license activation and system stability. This includes your Name, Email, Phone Number, and unique Hardware ID (UUID) to bind your license to your machine. We do not track your location or browsing habits.',
+            title: 'What Information We Collect',
+            content: 'We only collect basic account information needed for license activation: your name, email, phone number, and a unique hardware ID from your computer. We do not track your location, browsing habits, or business activities.',
         },
         {
             icon: Lock,
-            title: 'Security Measures',
-            content: 'We implement enterprise-grade security for our cloud-based license management system. Your account credentials are encrypted using industry-standard protocols. Local data backups are optional and entirely managed by you; we recommend using external encrypted drives.',
+            title: 'How We Protect Your Data',
+            content: 'Account information is encrypted and stored securely. Your business data on your computer is under your control — we recommend regular backups to external drives or cloud storage.',
         },
         {
             icon: Eye,
-            title: 'Third-Party Disclosure',
-            content: 'We never sell, trade, or otherwise transfer your personally identifiable information to outside parties. This does not include trusted third parties who assist us in operating our website or servicing you, so long as those parties agree to keep this information confidential.',
+            title: 'We Do Not Share Your Data',
+            content: 'We never sell, trade, or share your personal information with third parties. The only exception is trusted service providers who help us operate the platform, and they are required to keep your information confidential.',
         },
         {
             icon: Bell,
-            title: 'Policy Updates',
-            content: 'We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date at the bottom of this document.',
+            title: 'Changes to This Policy',
+            content: 'We may update this policy from time to time. Any changes will be posted on this page with an updated date. We encourage you to review this page periodically.',
         },
         {
             icon: FileText,
             title: 'Your Rights',
-            content: 'As a user in Bhutan, you have the right to access the personal information we hold about you. You can request that we correct, update, or delete your registration data at any time by contacting our support team.',
+            content: 'You can request to see, correct, or delete your personal account information at any time by emailing us at dhisumtseyig@gmail.com.',
         },
     ]
 
@@ -45,10 +48,10 @@ export default function PrivacyPage() {
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-bhutan-gold/10 blur-[120px] rounded-full pointer-events-none" />
                 <div className="container relative z-10 px-4 md:px-6">
                     <div className="max-w-3xl mx-auto text-center space-y-4">
-                        <Badge className="bg-bhutan-gold text-bhutan-maroon-dark border-none px-4 py-1.5 rounded-full font-black tracking-widest uppercase text-[10px]">Security First</Badge>
+                        <Badge className="bg-bhutan-gold text-bhutan-maroon-dark border-none px-4 py-1.5 rounded-full font-black tracking-widest uppercase text-[10px]">Your Privacy Matters</Badge>
                         <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">Privacy Policy</h1>
                         <p className="text-sm md:text-lg text-white/60 font-medium leading-relaxed">
-                            Your data belongs to you. We are committed to protecting your privacy and ensuring transparency in how we handle your information.
+                            Your business data belongs to you. Here is how we handle your information.
                         </p>
                     </div>
                 </div>
@@ -75,16 +78,16 @@ export default function PrivacyPage() {
                         </div>
 
                         <div className="mt-16 p-8 md:p-12 bg-white rounded-[3rem] border border-slate-100 shadow-sm space-y-6">
-                            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Additional Information</h2>
+                            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Need More Information?</h2>
                             <div className="space-y-4 text-slate-600 font-medium text-sm leading-relaxed">
                                 <p>
-                                    By using Dhisum Tseyig, you consent to our privacy policy. If we decide to change our privacy policy, we will post those changes on this page.
+                                    By using Dhisum Tseyig, you agree to this privacy policy. If we make changes, we will update this page.
                                 </p>
                                 <p>
-                                    Questions? Reach out to our data protection officer at <span className="text-bhutan-maroon font-black">dhisumtseyig@gmail.com</span>
+                                    Questions? Email us at <span className="text-bhutan-maroon font-black">dhisumtseyig@gmail.com</span>
                                 </p>
                                 <div className="pt-8 border-t border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    Last Updated: March 2026
+                                    Last Updated: April 2026
                                 </div>
                             </div>
                         </div>

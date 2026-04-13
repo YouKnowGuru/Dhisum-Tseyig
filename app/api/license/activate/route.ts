@@ -5,10 +5,10 @@ import { licenseKeySchema } from '@/lib/validation/schemas'
 import { licenseRateLimit } from '@/lib/rate-limit/rate-limit'
 import { ZodError } from 'zod'
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Apply rate limiting
-    const rateLimitResponse = licenseRateLimit(req)
+    const rateLimitResponse = await licenseRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }

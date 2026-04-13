@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,7 +17,8 @@ import {
 } from '@/components/ui/select'
 import { ArrowLeft, Loader2, Key, Save } from 'lucide-react'
 
-export default function EditLicensePage({ params }: { params: { id: string } }) {
+export default function EditLicensePage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params)
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -36,7 +37,7 @@ export default function EditLicensePage({ params }: { params: { id: string } }) 
     useEffect(() => {
         const fetchLicense = async () => {
             try {
-                const response = await fetch(`/api/admin/licenses/${params.id}`)
+                const response = await fetch(`/api/admin/licenses/${id}`)
                 if (!response.ok) throw new Error('Failed to fetch license')
                 const data = await response.json()
                 const license = data.license
@@ -57,7 +58,7 @@ export default function EditLicensePage({ params }: { params: { id: string } }) 
         }
 
         fetchLicense()
-    }, [params.id])
+    }, [id])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -70,7 +71,7 @@ export default function EditLicensePage({ params }: { params: { id: string } }) 
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    id: params.id,
+                    id: id,
                     ...formData,
                 }),
             })

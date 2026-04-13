@@ -15,7 +15,18 @@ import {
     Database,
     Calculator,
     ShoppingCart,
-    Receipt
+    Receipt,
+    Package,
+    BarChart3,
+    FileText,
+    Wallet,
+    Printer,
+    Clock,
+    QrCode,
+    RefreshCw,
+    Briefcase,
+    Tag,
+    Building2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -24,26 +35,34 @@ import { cn } from '@/lib/utils'
 const values = [
     {
         icon: Globe,
-        title: 'Bhutanese First',
-        description: 'Engineered specifically for the unique economic landscape of the Kingdom, from GST compliance to local payment integrations.'
+        title: 'Built for Bhutan',
+        description: 'Made for Bhutanese businesses — 5% GST, local payment methods (mBOB, BNB, TPay), and Bhutanese addresses (Dzongkhag/Gewog).'
     },
     {
         icon: Shield,
-        title: 'Offline-First Sovereignty',
-        description: 'Data stays with you. Our POS operates perfectly without internet, ensuring business continuity in any terrain.'
+        title: 'Works Without Internet',
+        description: 'All your data is stored on your computer. No internet needed for sales, inventory, or printing. Your data stays yours.'
     },
     {
         icon: Award,
-        title: 'Precision Engineering',
-        description: 'A strict double-entry accounting engine underpins every transaction, ensuring financial integrity without the complexity.'
+        title: 'Accurate Accounting',
+        description: 'Every transaction is recorded with proper debit/credit entries. Your books are always balanced.'
     }
 ]
 
 const features = [
-    { icon: Calculator, title: 'GST Engine', desc: 'Automatic 5% Bhutan GST calculation on every sale, purchase, and return.' },
-    { icon: ShoppingCart, title: 'POS Terminal', desc: 'Barcode-ready sales interface with credit control and multiple payment modes.' },
-    { icon: Database, title: 'Inventory Hub', desc: 'Real-time stock tracking with average cost method and low stock alerts.' },
-    { icon: Receipt, title: 'Compliance Reporting', desc: 'Generate Trial Balances, P&L, and Balance Sheets with absolute precision.' }
+    { icon: ShoppingCart, title: 'POS Sales', desc: 'Barcode-ready checkout with cart hold, discounts, and 10 payment modes.' },
+    { icon: Package, title: 'Inventory', desc: 'Real-time stock tracking, low stock alerts, and barcode management.' },
+    { icon: Calculator, title: 'GST Compliance', desc: 'Auto 5% GST on taxable sales with monthly return generation.' },
+    { icon: Receipt, title: 'Invoicing', desc: 'Professional invoices with your branding. Print or email.' },
+    { icon: BarChart3, title: 'Reports', desc: 'Profit & Loss, Balance Sheet, Trial Balance, Stock Valuation.' },
+    { icon: Users, title: 'Customers & Suppliers', desc: 'Track contacts, credit limits, payment history, and outstanding balances.' },
+    { icon: Wallet, title: 'Bhutanese Payments', desc: 'mBOB, BNB Pay, TPay, DrukPNB, BDBL, DKBank, Cash, Card, Transfer, Credit.' },
+    { icon: QrCode, title: 'Barcode Scanning', desc: 'Scan any barcode to add items to sale instantly.' },
+    { icon: Briefcase, title: 'Employee & Payroll', desc: 'Manage staff records and process monthly payroll.' },
+    { icon: Tag, title: 'Tiered Pricing', desc: 'Different prices for wholesale, retail, and dealer customers.' },
+    { icon: RefreshCw, title: 'Recurring Transactions', desc: 'Auto-record regular income and expenses on schedule.' },
+    { icon: Shield, title: 'Audit Trail', desc: 'Track every action — who did what and when.' },
 ]
 
 export default function AboutPage() {
@@ -58,39 +77,39 @@ export default function AboutPage() {
                     <div className="max-w-3xl space-y-6 stagger-in">
                         <Badge className="bg-bhutan-maroon text-bhutan-gold border-none px-4 py-1.5 rounded-full font-black tracking-widest uppercase text-[10px]">About Dhisum Tseyig</Badge>
                         <h1 className="text-4xl md:text-7xl font-black tracking-tight leading-none text-glow-maroon">
-                            Architects of <span className="text-bhutan-gold">Digital</span> Change
+                            Business Software for <span className="text-bhutan-gold">Bhutan</span>
                         </h1>
                         <p className="text-lg md:text-xl text-white/70 font-medium leading-relaxed max-w-2xl">
-                            We are building the technological backbone for the next generation of Bhutanese entrepreneurs. Our mission is to democratize world-class business tools for every dzongkhag in the Kingdom.
+                            We built Dhisum Tseyig because Bhutanese businesses deserved better. World-class POS, inventory, and accounting tools that understand local needs — from GST compliance to mBOB payments.
                         </p>
                     </div>
                 </div>
             </section>
 
-            {/* Mission & Vision */}
+            {/* What's Included */}
             <section className="py-20 bg-white">
                 <div className="container px-4 md:px-6">
                     <div className="grid lg:grid-cols-2 gap-16 items-center">
                         <div className="space-y-8">
                             <div className="space-y-4">
-                                <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">Software Powered by Vision</h2>
+                                <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">20+ Features in One Package</h2>
                                 <div className="h-1.5 w-20 bg-bhutan-maroon rounded-full" />
                             </div>
                             <p className="text-slate-600 font-medium leading-relaxed">
-                                Dhisum Tseyig was born from a simple observation: Bhutanese businesses were being forced to choose between overly complex international software or inefficient manual ledgers.
+                                Dhisum Tseyig is not just a POS. It's a complete business management system built specifically for Bhutan. Everything from quick sales to full accounting, GST filing, payroll, and audit trails — all in one desktop application.
                             </p>
                             <p className="text-slate-600 font-medium leading-relaxed">
-                                We bridge that gap. By combining modern UI/UX with a powerhouse double-entry accounting engine, we allow business owners to focus on growth while we handle the complexity of compliance and inventory.
+                                No internet needed. No monthly fees. Your data stays on your computer.
                             </p>
-                            <div className="grid sm:grid-cols-2 gap-6 pt-4">
+                            <div className="grid sm:grid-cols-2 gap-4 pt-4">
                                 {features.map((item, i) => (
-                                    <div key={i} className="flex gap-4">
-                                        <div className="h-10 w-10 flex-shrink-0 rounded-xl bg-bhutan-maroon/5 flex items-center justify-center text-bhutan-maroon">
-                                            <item.icon className="h-5 w-5" />
+                                    <div key={i} className="flex gap-3">
+                                        <div className="h-9 w-9 flex-shrink-0 rounded-xl bg-bhutan-maroon/5 flex items-center justify-center text-bhutan-maroon">
+                                            <item.icon className="h-4 w-4" />
                                         </div>
                                         <div>
-                                            <h4 className="font-black text-slate-900 text-sm">{item.title}</h4>
-                                            <p className="text-xs text-slate-500 font-medium">{item.desc}</p>
+                                            <h4 className="font-black text-slate-900 text-xs">{item.title}</h4>
+                                            <p className="text-[10px] text-slate-500 font-medium">{item.desc}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -123,8 +142,8 @@ export default function AboutPage() {
             <section className="py-20 md:py-32 bg-slate-50 relative overflow-hidden">
                 <div className="container px-4 md:px-6 relative z-10">
                     <div className="flex flex-col items-center text-center mb-16 md:mb-20">
-                        <Badge className="bg-bhutan-maroon/10 text-bhutan-maroon border-none px-4 py-2 rounded-full font-black tracking-[0.3em] uppercase text-[10px] mb-6 shadow-sm">Visionary Core</Badge>
-                        <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">The Minds Behind the Code</h2>
+                        <Badge className="bg-bhutan-maroon/10 text-bhutan-maroon border-none px-4 py-2 rounded-full font-black tracking-[0.3em] uppercase text-[10px] mb-6 shadow-sm">The Team</Badge>
+                        <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">The People Behind the Software</h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-stretch max-w-6xl mx-auto">
@@ -139,7 +158,7 @@ export default function AboutPage() {
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent opacity-90" />
 
                             <div className="absolute top-8 left-8">
-                                <div className="bg-bhutan-gold text-bhutan-maroon font-black text-[10px] uppercase tracking-[0.2em] px-4 py-2 rounded-full shadow-lg">Founder & Architect</div>
+                                <div className="bg-bhutan-gold text-bhutan-maroon font-black text-[10px] uppercase tracking-[0.2em] px-4 py-2 rounded-full shadow-lg">Founder & Developer</div>
                             </div>
 
                             <div className="absolute bottom-8 left-8 right-8">
@@ -147,16 +166,16 @@ export default function AboutPage() {
                                     <div className="absolute -top-6 -left-2 text-[120px] text-white/5 font-serif italic pointer-events-none select-none">&ldquo;</div>
                                     <div className="space-y-4 relative z-10">
                                         <p className="text-sm md:text-base text-slate-900 font-bold leading-relaxed italic">
-                                            &quot;True technological progress isn&apos;t just about powerful code—it&apos;s about creating tools that respect local context. Keshab Baral founded Dhisum Tseyig on the principle of &apos;Technological Sovereignty&apos; for Bhutan.&quot;
+                                            &quot;I built Dhisum Tseyig because Bhutanese businesses deserve software that understands them — not forced to adapt foreign tools that don't fit our way of doing business.&quot;
                                         </p>
                                         <p className="text-xs text-slate-700 font-medium leading-relaxed">
-                                            As the Lead Systems Developer, Keshab ensures every feature—from the GST engine to the offline synchronization—is engineered with the precision required for high-stakes business management while remaining accessible to every entrepreneur in the Heart of the Himalayas.
+                                            Keshab Baral is the lead developer behind Dhisum Tseyig. Based in Tsirang, Bhutan, he designs and builds every feature with local businesses in mind — from GST compliance to mBOB payment tracking.
                                         </p>
                                     </div>
                                     <div className="mt-8 flex items-center justify-between">
                                         <div>
                                             <h4 className="text-xl font-black text-bhutan-maroon tracking-tight">Keshab Baral</h4>
-                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">Founding Developer | Tsirang, Bhutan</p>
+                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">Founder & Lead Developer | Tsirang, Bhutan</p>
                                         </div>
                                         <div className="h-12 w-12 rounded-2xl bg-bhutan-maroon flex items-center justify-center text-bhutan-gold text-lg font-black rotate-3 group-hover/quote:rotate-0 transition-transform shadow-lg">KB</div>
                                     </div>
@@ -182,12 +201,12 @@ export default function AboutPage() {
                                 <div className="glass-premium p-8 rounded-[2.5rem] border border-white/30 backdrop-blur-xl relative overflow-hidden group/quote shadow-2xl">
                                     <div className="absolute -top-6 -left-2 text-[120px] text-white/5 font-serif italic pointer-events-none select-none">&ldquo;</div>
                                     <p className="text-sm md:text-lg text-slate-900 font-bold leading-relaxed relative z-10 italic">
-                                        &quot;Our Store Tsirang stands as the primary catalyst for digital transformation in the region, bridging the gap between world-class POS technology and local business needs.&quot;
+                                        &quot;Our Store Tsirang helps bring modern business tools to local shops and stores, making technology accessible for everyone in the region.&quot;
                                     </p>
                                     <div className="mt-8 flex items-center justify-between">
                                         <div>
                                             <h4 className="text-xl font-black text-bhutan-maroon tracking-tight">Our Store Tsirang</h4>
-                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">Digital Transformation Partner</p>
+                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">Strategic Partner | Tsirang, Bhutan</p>
                                         </div>
                                         <div className="h-12 w-12 rounded-2xl bg-bhutan-maroon flex items-center justify-center text-bhutan-gold text-lg font-black -rotate-3 group-hover/quote:rotate-0 transition-transform shadow-lg">OTS</div>
                                     </div>
@@ -202,16 +221,16 @@ export default function AboutPage() {
             <section className="py-20 bg-bhutan-maroon text-white relative overflow-hidden">
                 <div className="container text-center relative z-10">
                     <h2 className="text-3xl md:text-5xl font-black mb-6 tracking-tight">Ready to Modernize Your Business?</h2>
-                    <p className="text-bhutan-gold font-bold mb-10 max-w-xl mx-auto">Experience the precision of Dhisum Tseyig. Start your 7-day free trial today.</p>
+                    <p className="text-bhutan-gold font-bold mb-10 max-w-xl mx-auto">Try Dhisum Tseyig free for 7 days. No credit card needed.</p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
                         <Link href="/download">
-                            <Button size="lg" className="bg-bhutan-gold text-bhutan-maroon hover:bg-white hover:text-bhutan-maroon font-black h-14 px-8 rounded-2xl shadow-xl transition-all">
+                            <Button size="lg" className="bg-bhutan-gold text-bhutan-maroon-dark hover:bg-white hover:text-bhutan-maroon font-black h-14 px-8 rounded-2xl shadow-xl transition-all">
                                 Download Free Trial
                             </Button>
                         </Link>
                         <Link href="/contact">
                             <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 font-bold h-14 px-8 rounded-2xl backdrop-blur-md">
-                                Contact Sales
+                                Contact Us
                             </Button>
                         </Link>
                     </div>

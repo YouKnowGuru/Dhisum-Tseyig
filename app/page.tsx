@@ -35,47 +35,47 @@ const features = [
   {
     icon: ShoppingCart,
     title: 'POS Sales',
-    description: 'Fast and intuitive point-of-sale with cart management, barcode search, and instant checkout.',
+    description: 'Barcode-ready checkout with cart hold, discounts, and 10 payment modes.',
   },
   {
     icon: Package,
     title: 'Inventory Management',
-    description: 'Track stock levels in real-time with low stock alerts, categories, units, and stock adjustments.',
+    description: 'Real-time stock tracking, low stock alerts, categories, units, and barcode management.',
   },
   {
     icon: Calculator,
     title: 'GST Compliance',
-    description: 'Automatic 5% GST calculation on all taxable transactions per Bhutanese regulation.',
+    description: 'Automatic 5% GST on taxable sales with monthly return generation for filing.',
   },
   {
     icon: Receipt,
     title: 'Invoicing & Printing',
-    description: 'Generate professional invoices with your branding, print receipts, and track payment status.',
+    description: 'Professional invoices, 4 print templates, thermal receipt support, email invoices.',
   },
   {
     icon: BarChart3,
     title: 'Reports & Analytics',
-    description: 'Trial Balance, Profit & Loss, Balance Sheet, Outstanding reports, and Stock valuation.',
+    description: 'Trial Balance, Profit & Loss, Balance Sheet, Outstanding, and Stock Valuation reports.',
   },
   {
     icon: Users,
-    title: 'Customer & Supplier',
-    description: 'Manage contacts, track credit limits, payment history, and outstanding balances.',
+    title: 'Customers & Suppliers',
+    description: 'Contact management, credit limits, payment history, ledgers, and customer statements.',
   },
   {
     icon: Wallet,
     title: 'Bhutanese Payments',
-    description: 'Support for mBOB, BNB, TPay, DrukPNB, BDBL, DKBank, Cash, Card, and credit payments.',
+    description: 'mBOB, BNB Pay, TPay, DrukPNB, BDBL, DKBank, Cash, Card, Bank Transfer, and Credit.',
   },
   {
     icon: FileText,
-    title: 'Double-Entry Accounting',
-    description: 'Full chart of accounts with automatic journal entries for every transaction.',
+    title: 'Purchase Orders & Quotes',
+    description: 'Create supplier orders, receive inventory, send price quotes, convert to sales.',
   },
   {
     icon: Settings,
-    title: 'Business Settings',
-    description: 'Configure company details, tax rates, invoice formats, user roles, and backup schedules.',
+    title: 'Settings & Backup',
+    description: 'Company info, user management, cloud backup (Drive/MEGA), audit trail, tiered pricing.',
   },
 ]
 
@@ -84,9 +84,9 @@ const pricingPlans = [
     name: 'Free Trial',
     price: '0',
     period: '7 days',
-    description: 'Full feature access',
+    description: 'Try everything free',
     features: [
-      'All 9 Modules',
+      'All 20+ Features',
       'Unlimited Products',
       'GST Compliance',
       '1 User Account',
@@ -101,7 +101,7 @@ const pricingPlans = [
     description: 'Nu. 6,999 Renew',
     features: [
       '1 User Account',
-      'Unlimited POS',
+      'All POS Features',
       'Full Accounting',
       'Priority Support',
     ],
@@ -115,9 +115,9 @@ const pricingPlans = [
     description: 'Nu. 2,999 Renew',
     features: [
       '2 User Accounts',
-      'Unlimited POS',
-      'Remote Setup',
-      'Priority Support',
+      'Purchase Orders',
+      'Expense Tracking',
+      'Free Remote Setup',
     ],
     cta: 'Select Growth',
     href: '/contact',
@@ -130,8 +130,8 @@ const pricingPlans = [
     description: 'Nu. 999 Renew',
     features: [
       '5 User Accounts',
-      'Unlimited POS',
-      'Account Manager',
+      'Payroll & Branches',
+      'Tiered Pricing',
       '24/7 Support',
     ],
     cta: 'Go Enterprise',
@@ -406,15 +406,15 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 stagger-in">
             {[
-              { icon: LayoutDashboard, title: 'Dashboard', desc: 'Real-time analytics and system monitoring.', color: 'from-blue-500 to-indigo-600' },
-              { icon: ShoppingCart, title: 'POS Terminal', desc: 'Fast checkout with barcode and payments.', color: 'from-green-500 to-emerald-600' },
-              { icon: Package, title: 'Inventory', desc: 'Stock control with alerts and tracking.', color: 'from-orange-500 to-amber-600' },
-              { icon: Users, title: 'CRM', desc: 'Customer and supplier management.', color: 'from-purple-500 to-violet-600' },
-              { icon: TrendingUp, title: 'Journal', desc: 'Double-entry accounting and ledgers.', color: 'from-bhutan-maroon to-red-700' },
-              { icon: Shield, title: 'GST Core', desc: 'Automated 5% GST compliance.', color: 'from-yellow-400 to-bhutan-gold' },
-              { icon: BarChart3, title: 'Analytics', desc: 'P&L, Balance Sheets, and reports.', color: 'from-cyan-500 to-blue-600' },
-              { icon: Key, title: 'Licenses', desc: 'Cloud-based license management.', color: 'from-slate-700 to-slate-900' },
-              { icon: Settings, title: 'Settings', desc: 'Branding, roles, and backups.', color: 'from-pink-500 to-rose-600' }
+              { icon: LayoutDashboard, title: 'Dashboard', desc: 'Real-time sales, stock alerts, and business overview.', color: 'from-blue-500 to-indigo-600' },
+              { icon: ShoppingCart, title: 'POS Terminal', desc: 'Barcode scanning, cart hold, 10 payment modes.', color: 'from-green-500 to-emerald-600' },
+              { icon: Package, title: 'Inventory', desc: 'Stock tracking, low alerts, barcode management.', color: 'from-orange-500 to-amber-600' },
+              { icon: Users, title: 'Customers', desc: 'Contacts, credit limits, ledgers, statements.', color: 'from-purple-500 to-violet-600' },
+              { icon: TrendingUp, title: 'Accounting', desc: 'Double-entry, payments, transfers, expenses.', color: 'from-bhutan-maroon to-red-700' },
+              { icon: Shield, title: 'GST Core', desc: 'Auto 5% GST, monthly returns, filing status.', color: 'from-yellow-400 to-bhutan-gold' },
+              { icon: BarChart3, title: 'Reports', desc: 'P&L, Balance Sheet, Trial Balance, Stock.', color: 'from-cyan-500 to-blue-600' },
+              { icon: Receipt, title: 'PO & Quotes', desc: 'Purchase orders, quotations, convert to sale.', color: 'from-teal-500 to-emerald-600' },
+              { icon: Settings, title: 'Settings', desc: 'Backup, users, audit trail, cloud sync.', color: 'from-pink-500 to-rose-600' }
             ].map((module, i) => (
               <ModuleCard key={i} module={module} index={i} />
             ))}

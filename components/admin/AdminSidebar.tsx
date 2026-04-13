@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Key, Users, Settings, LogOut, ChevronLeft, ChevronRight, RefreshCw, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, Key, Users, Settings, LogOut, ChevronLeft, ChevronRight, RefreshCw, MessageSquare, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { signOut } from 'next-auth/react'
@@ -19,6 +19,7 @@ const navItems = [
   { href: '/admin/licenses', label: 'Licenses', icon: Key },
   { href: '/admin/customers', label: 'Customers', icon: Users },
   { href: '/admin/updates', label: 'Updates', icon: RefreshCw },
+  { href: '/admin/security', label: 'Security', icon: Shield },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 

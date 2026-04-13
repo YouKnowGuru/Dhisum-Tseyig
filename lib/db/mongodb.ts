@@ -1,4 +1,8 @@
 import mongoose from 'mongoose'
+import dns from 'dns'
+
+// Force Google DNS for MongoDB Atlas resolution (bypasses ISP DNS issues)
+dns.setServers(['8.8.8.8', '8.8.4.4'])
 
 // MONGODB_URI is checked inside connectDB to avoid build-time errors when env vars are missing
 
@@ -31,6 +35,8 @@ async function connectDB(): Promise<typeof mongoose> {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      family: 4, // Force IPv4 to avoid resolution issues
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of hanging
     }
 
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {

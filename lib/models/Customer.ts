@@ -5,6 +5,11 @@ export interface ICustomer extends Document {
   email: string
   company?: string
   phone?: string
+  address?: {
+    street?: string
+    gewog?: string
+    dzongkhag?: string
+  }
   createdAt: Date
   updatedAt: Date
 }
@@ -28,6 +33,11 @@ const CustomerSchema: Schema = new Schema(
     phone: {
       type: String,
       default: '',
+    },
+    address: {
+      street: { type: String, default: '' },
+      gewog: { type: String, default: '' },
+      dzongkhag: { type: String, default: '' },
     },
   },
   {

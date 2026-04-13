@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Menu, X, Download, Key, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
@@ -11,6 +11,7 @@ const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
   { href: '/features', label: 'Features' },
+  { href: '/security', label: 'Security' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/download', label: 'Download' },
   { href: '/docs', label: 'Docs' },
@@ -19,6 +20,11 @@ const navLinks = [
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200/50 bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:bg-white/50">
@@ -78,62 +84,64 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Menu */}
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon">
-              <Menu className="h-6 w-6" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-[300px] border-l-0 bg-white/95 backdrop-blur-2xl">
-            <SheetHeader className="sr-only">
-              <SheetTitle>Navigation Menu</SheetTitle>
-              <SheetDescription>Access Dhisum Tseyig platform sections</SheetDescription>
-            </SheetHeader>
-            <div className="flex flex-col gap-6">
-              <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
-                <div className="relative h-12 w-12 flex items-center justify-center rounded-full bg-white shadow-md ring-2 ring-bhutan-maroon/5 overflow-hidden">
-                  <Image
-                    src="/images/logo.png"
-                    alt="Dhisum Tseyig Logo"
-                    width={48}
-                    height={48}
-                    className="object-cover rounded-full p-0.5"
-                  />
-                </div>
-                <span className="text-lg font-bold">
-                  <span className="text-bhutan-maroon">Dhisum</span> Tseyig
-                </span>
-              </Link>
-              <nav className="flex flex-col gap-4">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="text-sm font-medium text-slate-600 transition-colors hover:text-bhutan-maroon"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {link.label}
+        {mounted && (
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] border-l-0 bg-white/95 backdrop-blur-2xl">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Navigation Menu</SheetTitle>
+                <SheetDescription>Access Dhisum Tseyig platform sections</SheetDescription>
+              </SheetHeader>
+              <div className="flex flex-col gap-6">
+                <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
+                  <div className="relative h-12 w-12 flex items-center justify-center rounded-full bg-white shadow-md ring-2 ring-bhutan-maroon/5 overflow-hidden">
+                    <Image
+                      src="/images/logo.png"
+                      alt="Dhisum Tseyig Logo"
+                      width={48}
+                      height={48}
+                      className="object-cover rounded-full p-0.5"
+                    />
+                  </div>
+                  <span className="text-lg font-bold">
+                    <span className="text-bhutan-maroon">Dhisum</span> Tseyig
+                  </span>
+                </Link>
+                <nav className="flex flex-col gap-4">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="text-sm font-medium text-slate-600 transition-colors hover:text-bhutan-maroon"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </nav>
+                <div className="flex flex-col gap-2">
+                  <Link href="/license-activate" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full border-bhutan-maroon/20 text-bhutan-maroon">
+                      <Key className="mr-2 h-4 w-4" />
+                      Activate License
+                    </Button>
                   </Link>
-                ))}
-              </nav>
-              <div className="flex flex-col gap-2">
-                <Link href="/license-activate" onClick={() => setIsOpen(false)}>
-                  <Button variant="outline" className="w-full border-bhutan-maroon/20 text-bhutan-maroon">
-                    <Key className="mr-2 h-4 w-4" />
-                    Activate License
-                  </Button>
-                </Link>
-                <Link href="/download" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full bg-bhutan-maroon hover:bg-bhutan-maroon-dark text-white">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
-                </Link>
+                  <Link href="/download" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full bg-bhutan-maroon hover:bg-bhutan-maroon-dark text-white">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </Button>
+                  </Link>
+                </div>
               </div>
-            </div>
-          </SheetContent>
-        </Sheet>
+            </SheetContent>
+          </Sheet>
+        )}
       </div>
     </header>
   )

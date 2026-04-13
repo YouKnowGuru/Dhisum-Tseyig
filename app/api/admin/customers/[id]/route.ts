@@ -10,7 +10,7 @@ import { apiRateLimit } from '@/lib/rate-limit/rate-limit'
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse> {
   const { id } = await params;
   try {
     // Check authentication
@@ -20,7 +20,7 @@ export async function GET(
     }
 
     // Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }
@@ -38,8 +38,8 @@ export async function GET(
 
     // Get customer's licenses
     const licenses = await License.find({ email: customer.email })
-      .sort({ createdAt: -1 })
-      .lean()
+    .sort({ createdAt: -1 })
+    .lean()
 
     return NextResponse.json({
       customer,
@@ -58,7 +58,7 @@ export async function GET(
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse> {
   const { id } = await params;
   try {
     // Check authentication
@@ -68,7 +68,7 @@ export async function DELETE(
     }
 
     // Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }
@@ -118,7 +118,7 @@ export async function DELETE(
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse> {
   const { id } = await params;
   try {
     // Check authentication
@@ -128,7 +128,7 @@ export async function PATCH(
     }
 
     // Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }

@@ -15,13 +15,13 @@ const plans = [
     name: 'Free Trial',
     price: '0',
     period: '7 days',
-    description: 'Experience the full power of Dhisum Tseyig.',
+    description: 'Try everything before you buy.',
     features: [
-      'All 9 Premium Modules',
+      'All 20+ Features',
       'Unlimited Products',
+      'Unlimited Customers',
       'Full GST Compliance',
-      'Offline-First Access',
-      'Data Backup Support',
+      'Works Offline',
       '1 User Account',
     ],
     cta: 'Start Free Trial',
@@ -31,15 +31,15 @@ const plans = [
     name: 'Starter (1-Year)',
     price: '9,999',
     period: 'first year',
-    renewal: 'Nu. 6,999',
-    description: 'Perfect for established single-user shops.',
+    renewal: 'Nu. 6,999/year',
+    description: 'For small shops with one operator.',
     features: [
-      '1 Licensed User Account',
-      'Unlimited POS Terminals',
+      '1 User Account',
+      'All POS & Inventory Features',
       'Full Accounting Suite',
-      'Priority Email Support',
-      'All Premium Features',
-      'Lifetime Data Ownership',
+      'GST Filing Support',
+      'Email Support',
+      'Free Updates',
     ],
     cta: 'Get Started',
     href: '/contact',
@@ -48,14 +48,14 @@ const plans = [
     name: 'Growth (2-Year)',
     price: '14,999',
     period: 'first purchase',
-    renewal: 'Nu. 2,999',
-    description: 'Best for growing businesses with staff.',
+    renewal: 'Nu. 2,999/year',
+    description: 'For growing businesses with staff.',
     features: [
-      '2 Licensed User Accounts',
-      'Unlimited POS Terminals',
-      'Advanced Inventory Hub',
-      'Priority Phone Support',
+      '2 User Accounts',
       'All Premium Features',
+      'Purchase Orders & Quotations',
+      'Expense Tracking',
+      'Phone Support',
       'Free Remote Setup',
     ],
     cta: 'Select Growth',
@@ -66,14 +66,14 @@ const plans = [
     name: 'Enterprise (3-Year)',
     price: '19,999',
     period: 'first purchase',
-    renewal: 'Nu. 999',
-    description: 'The Ultimate long-term value for scaling.',
+    renewal: 'Nu. 999/year',
+    description: 'Maximum value for scaling businesses.',
     features: [
-      '5 Licensed User Accounts',
-      'Unlimited POS Terminals',
-      'Enterprise Analytics',
-      '24/7 Priority Support',
+      '5 User Accounts',
       'All Premium Features',
+      'Payroll & Branch Management',
+      'Tiered Pricing',
+      '24/7 Priority Support',
       'Personal Account Manager',
     ],
     cta: 'Go Enterprise',
@@ -84,34 +84,34 @@ const plans = [
 
 const faqs = [
   {
-    question: 'Does Dhisum Tseyig work without internet?',
-    answer: 'Yes! Dhisum Tseyig is an offline-first desktop application. All your data is stored locally using SQLite. You don\'t need internet for daily operations like sales, inventory management, or printing invoices.',
+    question: 'Does it work without internet?',
+    answer: 'Yes! Dhisum Tseyig runs entirely on your computer. No internet needed for sales, inventory, printing, or reports. Your data is stored locally in a secure SQLite database.',
   },
   {
     question: 'Is GST automatically calculated?',
-    answer: 'Yes. The software automatically applies 5% GST on all taxable transactions as per Bhutanese regulation (Jan 2026). You can also generate monthly GSTR reports for filing.',
+    answer: 'Yes. The software automatically applies 5% GST on taxable sales as per Bhutanese law (January 2026). You can also generate monthly GST return reports ready for government filing.',
   },
   {
     question: 'What payment methods are supported?',
-    answer: 'The POS supports all major Bhutanese payment methods: mBOB, BNB, TPay, DrukPNB, BDBL, DKBank, plus cash, bank transfer, card, and credit payments.',
+    answer: 'The POS records all Bhutanese payment types: mBOB, BNB Pay, TPay, DrukPNB, BDBL, Druk Bank, cash, card, bank transfer, and credit (udhaaro).',
   },
   {
-    question: 'Can I switch plans later?',
-    answer: 'Yes, you can upgrade or downgrade your plan at any time. Your data is always preserved when switching plans.',
+    question: 'Can I upgrade my plan later?',
+    answer: 'Yes. You can upgrade anytime by contacting us. Your data is always preserved when switching plans.',
   },
   {
-    question: 'Is there a free trial?',
-    answer: 'Yes, all plans come with a 7-day free trial. No credit card required. Download and start using immediately.',
+    question: 'Is there really a free trial?',
+    answer: 'Yes — 7 days, full features, no credit card required. Download and start using immediately.',
   },
   {
-    question: 'Can I back up my data?',
-    answer: 'Yes. Dhisum Tseyig includes automatic backup scheduling and manual backup/restore functionality. You can back up your entire database with one click.',
+    question: 'How do backups work?',
+    answer: 'You can create manual backups with one click. The software also supports automatic cloud backups to Google Drive and MEGA if you enable them.',
   },
 ]
 
 export const metadata = {
-  title: 'Pricing - Dhisum Tseyig',
-  description: 'Choose the perfect plan for your Bhutanese business. All plans include GST compliance and offline functionality.',
+  title: 'Pricing - Dhisum Tseyig POS Software',
+  description: 'Simple, transparent pricing. 7-day free trial. All plans include GST compliance and offline functionality.',
 }
 
 export default function PricingPage() {
@@ -123,7 +123,7 @@ export default function PricingPage() {
           <div className="text-center max-w-xl mx-auto">
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black mb-3 tracking-tight leading-tight">Simple, Transparent Pricing</h1>
             <p className="text-xs md:text-sm text-white/70 font-medium leading-relaxed">
-              Choose the plan that works best for your business. All plans include GST compliance.
+              Try free for 7 days. Then choose the plan that fits your business.
             </p>
           </div>
         </div>

@@ -10,7 +10,7 @@ import { apiRateLimit } from '@/lib/rate-limit/rate-limit'
 import { ZodError } from 'zod'
 
 // GET /api/admin/customers - Get all customers
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     // Check authentication
     const session = await getServerSession(authOptions)
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }
@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/admin/customers - Create new customer
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Check authentication
     const session = await getServerSession(authOptions)
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }

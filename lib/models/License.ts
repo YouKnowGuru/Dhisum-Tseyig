@@ -7,11 +7,19 @@ export interface ILicense extends Document {
   companyName?: string
   plan: 'starter' | 'growth' | 'enterprise' | 'lifetime' | 'pro'
   maxUsers: number
-  status: 'active' | 'inactive' | 'expired' | 'suspended'
+  status: 'active' | 'inactive' | 'expired' | 'suspended' | 'revoked'
   deviceId?: string
+  activationSecret?: string
   expiryDate?: Date
   activationDate?: Date
   activationCount: number
+  lastTransferAt?: Date
+  monthlyTransferCount: number
+  // Revocation tracking
+  revokedAt?: Date
+  revokedBy?: string
+  revokedReason?: string
+  revokedNotes?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -48,10 +56,14 @@ const LicenseSchema: Schema = new Schema(
     },
     status: {
       type: String,
-      enum: ['active', 'inactive', 'expired', 'suspended'],
+      enum: ['active', 'inactive', 'expired', 'suspended', 'revoked'],
       default: 'inactive',
     },
     deviceId: {
+      type: String,
+      default: null,
+    },
+    activationSecret: {
       type: String,
       default: null,
     },
@@ -66,6 +78,31 @@ const LicenseSchema: Schema = new Schema(
     activationCount: {
       type: Number,
       default: 0,
+    },
+    lastTransferAt: {
+      type: Date,
+      default: null,
+    },
+    monthlyTransferCount: {
+      type: Number,
+      default: 0,
+    },
+    // Revocation tracking
+    revokedAt: {
+      type: Date,
+      default: null,
+    },
+    revokedBy: {
+      type: String,
+      default: null,
+    },
+    revokedReason: {
+      type: String,
+      default: null,
+    },
+    revokedNotes: {
+      type: String,
+      default: null,
     },
   },
   {

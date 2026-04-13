@@ -56,3 +56,11 @@ compile_errors.txt
 lint-output.txt
 builder-binaries/
 builder-effective-config.yaml
+
+# Excluded directories
+"New folder/"
+New folder/
+
+# Documentation files
+*.md
+!README.md

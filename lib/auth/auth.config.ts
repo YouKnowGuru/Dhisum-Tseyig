@@ -35,11 +35,12 @@ export const authOptions: NextAuthOptions = {
             return null
           }
 
-          return {
-            id: admin._id.toString(),
-            username: admin.username,
-            email: admin.email || '',
-          }
+      return {
+          id: admin._id.toString(),
+          username: admin.username,
+          email: admin.email || '',
+          role: admin.role || 'admin',
+        }
         } catch (error) {
           console.error('Auth error:', error)
           return null
@@ -56,6 +57,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id
         token.username = user.username
+        token.role = (user as any).role
       }
       return token
     },
@@ -63,6 +65,7 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         session.user.id = token.id as string
         session.user.username = token.username as string
+        ;(session.user as any).role = token.role as string
       }
       return session
     },

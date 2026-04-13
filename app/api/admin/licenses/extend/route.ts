@@ -8,7 +8,7 @@ import { apiRateLimit } from '@/lib/rate-limit/rate-limit'
 import { ZodError } from 'zod'
 
 // POST /api/admin/licenses/extend - Extend license expiry
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Check authentication
     const session = await getServerSession(authOptions)
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Apply rate limiting
-    const rateLimitResponse = apiRateLimit(req)
+    const rateLimitResponse = await apiRateLimit(req)
     if (rateLimitResponse) {
       return rateLimitResponse
     }
