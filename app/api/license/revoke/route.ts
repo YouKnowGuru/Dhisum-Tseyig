@@ -127,9 +127,18 @@ export async function POST(req: NextRequest) {
  * GET /api/license/revoke/:licenseKey
  * Check revocation status of a license (for POS client polling)
  */
-export async function GET(req: NextRequest, { params }: { params: Promise<{ licenseKey: string }> }) {
+export async function GET(req: NextRequest) {
   try {
-    const { licenseKey } = await params
+    // Extract licenseKey from URL pathname: /api/license/revoke/XXXXX
+    const pathname = req.nextUrl.pathname
+    const licenseKey = pathname.split('/').pop()
+
+    if (!licenseKey || licenseKey === 'revoke') {
+      return NextResponse.json(
+        { success: false, error: 'License key is required' },
+        { status: 400 }
+      )
+    }
 
     await connectDB()
 
