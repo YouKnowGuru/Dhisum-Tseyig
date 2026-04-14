@@ -12,6 +12,11 @@ const nextConfig = {
       },
     ],
   },
+  // Enable static export for Electron
+  output: process.env.NEXT_EXPORT === 'true' ? 'export' : undefined,
+  // Only include API routes in static export
+  // Pages will be served separately from Electron
+
   async headers() {
     return [
       {

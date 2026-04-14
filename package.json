@@ -3,13 +3,17 @@
   "version": "1.0.0",
   "description": "Dhisum Tseyig POS Software Distribution and Licensing Platform",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev -H 127.0.0.1",
     "build": "next build",
     "start": "next start",
     "start:dev": "cross-env NODE_ENV=development next start",
     "lint": "next lint",
-    "seed": "ts-node scripts/seed-admin.ts"
+    "seed": "ts-node scripts/seed-admin.ts",
+    "electron:dev": "cross-env NODE_ENV=development electron .",
+    "electron:build": "npm run build && electron-builder",
+    "electron:build:win": "npm run build && electron-builder --win"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.478.0",
@@ -56,6 +60,8 @@
     "autoprefixer": "^10.4.16",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1",
     "eslint": "^9.0.0",
     "eslint-config-next": "^16.1.6",
     "postcss": "^8.4.32",
@@ -63,5 +69,29 @@
     "tailwindcss-animate": "^1.0.7",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
+  },
+  "build": {
+    "appId": "com.dhisum.tseyig",
+    "productName": "Dhisum Tseyig POS",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/**/*",
+      "out/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "public/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "license": "electron/license-agreement.html",
+      "deleteAppDataOnUninstall": true
+    }
   }
 }
