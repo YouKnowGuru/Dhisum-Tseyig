@@ -12,6 +12,10 @@ import {
 import { revokeAllUserSessions } from '@/lib/auth/tokens'
 import { z } from 'zod'
 
+const validateTokenSchema = z.object({
+  token: z.string().min(1, 'Reset token is required'),
+})
+
 const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Reset token is required'),
   password: z.string()
@@ -80,9 +84,29 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const validated = resetPasswordSchema.parse(body)
 
     await connectDB()
+
+    // Check if this is a token validation request (no password) or a full reset
+    const hasPassword = body.password && typeof body.password === 'string' && body.password.length > 0
+
+    let validated: { token: string; password?: string }
+    try {
+      if (hasPassword) {
+        validated = resetPasswordSchema.parse(body)
+      } else {
+        validated = validateTokenSchema.parse(body)
+      }
+    } catch (parseError) {
+      if (parseError instanceof z.ZodError) {
+        const errors = parseError.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+        return NextResponse.json(
+          { success: false, error: 'Validation failed', errors },
+          { status: 400 }
+        )
+      }
+      throw parseError
+    }
 
     // Hash the provided token for lookup
     const tokenHash = hashToken(validated.token)
@@ -115,6 +139,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // If no password provided, this is just a token validation request
+    if (!hasPassword) {
+      return NextResponse.json({
+        success: true,
+        message: 'Token is valid.',
+        email: tokenDoc.email,
+      })
+    }
+
     // Find user
     const user = await PosUser.findById(tokenDoc.userId)
     if (!user) {
@@ -126,7 +159,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Hash new password with bcrypt (12 rounds)
-    const hashedPassword = await bcrypt.hash(validated.password, 12)
+    const hashedPassword = await bcrypt.hash(validated.password!, 12)
 
     // Update password and security fields
     await PosUser.findByIdAndUpdate(user._id, {

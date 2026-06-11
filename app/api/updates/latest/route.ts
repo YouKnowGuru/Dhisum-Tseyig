@@ -4,7 +4,7 @@ import connectDB from '@/lib/db/mongodb'
 import Update, { IUpdate } from '@/lib/models/Update'
 import { apiRateLimit } from '@/lib/rate-limit/rate-limit'
 
-// GET /api/updates/latest - Get latest update
+// GET /api/updates/latest - Get latest update (called by POS apps)
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     // Apply rate limiting
@@ -15,8 +15,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     await connectDB()
 
-    // Find the latest update
-    const latestUpdate = await Update.findOne({ isLatest: true })
+    // Find the latest PUBLISHED update that is not blocked
+    const latestUpdate = await Update.findOne({
+      isLatest: true,
+      status: { $in: ['published', 'rollbacked'] },
+    })
       .sort({ createdAt: -1 })
       .lean() as IUpdate | null
 
@@ -26,14 +29,22 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         version: '1.0.0',
         notes: 'Initial release',
         downloadUrl: 'https://download.sitejinda.com/setup.exe',
+        blocked: false,
+        forced: false,
         releaseDate: new Date().toISOString(),
       })
     }
+
+    // Check if version is blocked
+    const isBlocked = latestUpdate.status === 'blocked'
 
     return NextResponse.json({
       version: latestUpdate.version,
       notes: latestUpdate.notes,
       downloadUrl: latestUpdate.downloadUrl,
+      blocked: isBlocked,
+      forced: latestUpdate.forced || false,
+      rolloutPercent: latestUpdate.rolloutPercent || 100,
       releaseDate: latestUpdate.createdAt,
     })
   } catch (error) {

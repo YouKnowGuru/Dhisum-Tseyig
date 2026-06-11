@@ -5,6 +5,9 @@ export interface IUpdate extends Document {
   notes: string
   downloadUrl: string
   isLatest: boolean
+  status: 'draft' | 'published' | 'blocked' | 'rollbacked'
+  rolloutPercent: number
+  forced: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -28,6 +31,21 @@ const UpdateSchema: Schema = new Schema(
       type: Boolean,
       default: false,
     },
+    status: {
+      type: String,
+      enum: ['draft', 'published', 'blocked', 'rollbacked'],
+      default: 'draft',
+    },
+    rolloutPercent: {
+      type: Number,
+      default: 100,
+      min: 0,
+      max: 100,
+    },
+    forced: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -36,6 +54,7 @@ const UpdateSchema: Schema = new Schema(
 
 // Index for faster queries
 UpdateSchema.index({ isLatest: 1 })
+UpdateSchema.index({ status: 1 })
 UpdateSchema.index({ createdAt: -1 })
 
 export default mongoose.models.Update || mongoose.model<IUpdate>('Update', UpdateSchema)

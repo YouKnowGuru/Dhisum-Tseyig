@@ -92,8 +92,8 @@ export async function POST(req: NextRequest) {
     const resetToken = crypto.randomBytes(32).toString('hex')
     const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex')
 
-    // Save with expiry (10 minutes)
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
+    // Save with expiry (30 minutes)
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000)
 
     await Token.create({
       userId: user._id,
