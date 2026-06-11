@@ -28,6 +28,10 @@ export default function CreateUpdatePage() {
         notes: '',
         downloadUrl: '',
         isLatest: 'false',
+        fileUrl: '',
+        fileSize: '',
+        fileSha512: '',
+        releaseDate: '',
     })
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -42,6 +46,7 @@ export default function CreateUpdatePage() {
                 body: JSON.stringify({
                     ...formData,
                     isLatest: formData.isLatest === 'true',
+                    fileSize: formData.fileSize ? parseInt(formData.fileSize, 10) : undefined,
                 }),
             })
 
@@ -118,6 +123,48 @@ export default function CreateUpdatePage() {
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, downloadUrl: e.target.value })}
                                 placeholder="https://s3.amazonaws.com/..."
                                 required
+                            />
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="fileUrl">Installer Filename</Label>
+                                <Input
+                                    id="fileUrl"
+                                    value={formData.fileUrl}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, fileUrl: e.target.value })}
+                                    placeholder="Jinda Setup 1.0.1.exe"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="fileSize">File Size (bytes)</Label>
+                                <Input
+                                    id="fileSize"
+                                    type="number"
+                                    value={formData.fileSize}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, fileSize: e.target.value })}
+                                    placeholder="205040356"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="fileSha512">SHA-512 Hash (from latest.yml)</Label>
+                            <Input
+                                id="fileSha512"
+                                value={formData.fileSha512}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, fileSha512: e.target.value })}
+                                placeholder="v75J3wD9ztlNJmj7RLAazvK6B0lCEuTNOqfGt29DJs..."
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="releaseDate">Release Date</Label>
+                            <Input
+                                id="releaseDate"
+                                type="datetime-local"
+                                value={formData.releaseDate}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, releaseDate: e.target.value })}
                             />
                         </div>
 
