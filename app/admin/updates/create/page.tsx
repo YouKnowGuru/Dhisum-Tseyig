@@ -41,16 +41,44 @@ export default function CreateUpdatePage() {
             setError('Please select a file and enter version first')
             return null
         }
+        
+        // Check file size (warn if > 50MB due to hosting limits)
+        const fileSizeMB = uploadFile.size / 1024 / 1024
+        if (fileSizeMB > 50) {
+            setError(`File is ${fileSizeMB.toFixed(0)}MB. Your hosting may limit uploads to ~50MB. If upload fails, use FTP to upload to public/downloads/ and paste the URL above.`)
+        }
+        
         setIsUploading(true)
         setError(null)
         try {
             const data = new FormData()
             data.append('file', uploadFile)
             data.append('version', formData.version)
+            
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), 120000) // 2 min timeout
+            
             const res = await fetch('/api/updates/upload', {
                 method: 'POST',
                 body: data,
+                signal: controller.signal,
             })
+            clearTimeout(timeoutId)
+            
+            if (!res.ok) {
+                const errorText = await res.text()
+                let errorMsg = 'Upload failed'
+                try {
+                    const errJson = JSON.parse(errorText)
+                    errorMsg = errJson.error || errorMsg
+                } catch {}
+                
+                if (res.status === 413) {
+                    errorMsg = 'File too large for server. Upload via FTP to public/downloads/ instead.'
+                }
+                throw new Error(errorMsg)
+            }
+            
             const result = await res.json()
             if (result.success) {
                 setFormData(prev => ({
@@ -60,11 +88,14 @@ export default function CreateUpdatePage() {
                 }))
                 return result.fileUrl
             } else {
-                setError(result.error || 'Upload failed')
-                return null
+                throw new Error(result.error || 'Upload failed')
             }
-        } catch (err) {
-            setError('Upload failed')
+        } catch (err: any) {
+            if (err.name === 'AbortError') {
+                setError('Upload timed out. File may be too large for your hosting plan.')
+            } else {
+                setError(err.message || 'Upload failed')
+            }
             return null
         } finally {
             setIsUploading(false)

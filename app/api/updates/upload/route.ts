@@ -6,6 +6,7 @@ import path from 'path'
 import { authOptions } from '@/lib/auth/auth.config'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 // POST /api/updates/upload - Upload installer file
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -30,6 +31,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Only .exe files allowed' }, { status: 400 })
     }
 
+    // Validate file size (max 500MB)
+    const maxSize = 500 * 1024 * 1024
+    if (file.size > maxSize) {
+      return NextResponse.json({ error: 'File too large (max 500MB)' }, { status: 400 })
+    }
+
     // Create uploads directory
     const uploadDir = path.join(process.cwd(), 'public', 'downloads')
     await mkdir(uploadDir, { recursive: true })
@@ -37,8 +44,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Save file
     const fileName = `Jinda.Setup.${version}.exe`
     const filePath = path.join(uploadDir, fileName)
+    
+    console.log(`[Upload] Starting upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`)
+    
     const bytes = await file.arrayBuffer()
     await writeFile(filePath, Buffer.from(bytes))
+    
+    console.log(`[Upload] Saved to: ${filePath}`)
 
     // Generate file URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://jindapos.com'
@@ -50,8 +62,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       fileName,
       fileSize: file.size,
     })
-  } catch (error) {
-    console.error('Upload error:', error)
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+  } catch (error: any) {
+    console.error('[Upload] Error:', error)
+    return NextResponse.json({ error: error.message || 'Upload failed' }, { status: 500 })
   }
 }
