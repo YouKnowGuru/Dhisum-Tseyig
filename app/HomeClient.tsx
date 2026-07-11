@@ -93,6 +93,7 @@ const pricingPlans = [
     ],
     cta: 'Start Trial',
     href: '/download',
+    bestValue: true,
   },
   {
     name: 'Starter (1-Yr)',
