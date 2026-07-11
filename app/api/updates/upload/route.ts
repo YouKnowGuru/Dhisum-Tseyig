@@ -37,13 +37,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'File too large (max 500MB)' }, { status: 400 })
     }
 
+    // Validate version format (prevent path traversal)
+    if (!/^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$/.test(version)) {
+      return NextResponse.json({ error: 'Invalid version format' }, { status: 400 })
+    }
+
     // Create uploads directory
     const uploadDir = path.join(process.cwd(), 'public', 'downloads')
     await mkdir(uploadDir, { recursive: true })
 
     // Save file
     const fileName = `Jinda.Setup.${version}.exe`
-    const filePath = path.join(uploadDir, fileName)
+    const filePath = path.join(uploadDir, path.basename(fileName))
     
     console.log(`[Upload] Starting upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`)
     
@@ -64,6 +69,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     })
   } catch (error: any) {
     console.error('[Upload] Error:', error)
-    return NextResponse.json({ error: error.message || 'Upload failed' }, { status: 500 })
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }
 }

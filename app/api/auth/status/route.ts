@@ -25,10 +25,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const user = await PosUser.findOne({ email: email.toLowerCase() })
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, message: 'No account found with this email.' },
-        { status: 404 }
-      )
+      return NextResponse.json({
+        success: true,
+        isVerified: false,
+      })
     }
 
     return NextResponse.json({

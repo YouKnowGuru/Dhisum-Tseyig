@@ -111,7 +111,8 @@ export function verifyAccessToken(token: string): AccessTokenPayload | null {
 }
 
 /**
- * Decode access token without verification (for inspection only)
+ * Decode access token without verification (for inspection only).
+ * WARNING: Do NOT use this for authorization decisions. Use verifyAccessToken() instead.
  */
 export function decodeAccessToken(token: string): AccessTokenPayload | null {
   try {

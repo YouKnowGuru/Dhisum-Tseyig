@@ -50,6 +50,7 @@ export function verifyToken(token: string): JwtPayload | null {
 
 /**
  * Decode a JWT without verification (for reading claims only).
+ * WARNING: Do NOT use this for authorization decisions. Use verifyToken() instead.
  */
 export function decodeToken(token: string): JwtPayload | null {
   try {

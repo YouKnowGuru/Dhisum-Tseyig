@@ -73,7 +73,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
       )
     }
 
-    const validStatuses = ['new', 'read', 'replied', 'archived']
+    const validStatuses = ['Unread', 'Read', 'Replied']
     if (!validStatuses.includes(status)) {
       return NextResponse.json(
         { success: false, error: 'Invalid status value' },

@@ -12,6 +12,7 @@ import {
   logAccountUnlocked,
 } from '@/lib/audit/auditLogger'
 import { logAuditEvent } from '@/lib/audit/auditLogger'
+import crypto from 'crypto'
 
 /**
  * GET /api/admin/users
@@ -311,17 +312,22 @@ function generateTempPassword(length: number = 12): string {
   const allChars = upperCase + lowerCase + numbers + symbols
   let password = ''
 
-  // Ensure at least one of each type
-  password += upperCase[Math.floor(Math.random() * upperCase.length)]
-  password += lowerCase[Math.floor(Math.random() * lowerCase.length)]
-  password += numbers[Math.floor(Math.random() * numbers.length)]
-  password += symbols[Math.floor(Math.random() * symbols.length)]
+  // Ensure at least one of each type using crypto.randomInt
+  password += upperCase[crypto.randomInt(upperCase.length)]
+  password += lowerCase[crypto.randomInt(lowerCase.length)]
+  password += numbers[crypto.randomInt(numbers.length)]
+  password += symbols[crypto.randomInt(symbols.length)]
 
   // Fill remaining
   for (let i = 4; i < length; i++) {
-    password += allChars[Math.floor(Math.random() * allChars.length)]
+    password += allChars[crypto.randomInt(allChars.length)]
   }
 
-  // Shuffle
-  return password.split('').sort(() => Math.random() - 0.5).join('')
+  // Secure shuffle using Fisher-Yates
+  const arr = password.split('')
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr.join('')
 }

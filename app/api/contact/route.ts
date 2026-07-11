@@ -122,7 +122,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({
       success: true,
       message: 'Thank you for your message. We will get back to you soon!',
-      data: newMessage,
     })
   } catch (error) {
     console.error('Contact form error:', error)

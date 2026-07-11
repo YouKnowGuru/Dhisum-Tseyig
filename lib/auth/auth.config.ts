@@ -38,8 +38,8 @@ export const authOptions: NextAuthOptions = {
           return {
             id: admin._id.toString(),
             username: admin.username,
-            email: admin.email || '',
-            role: 'admin',
+            email: '',
+            role: admin.role || 'admin',
           }
         } catch (error) {
           console.error('Auth error:', error)
@@ -58,10 +58,6 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
         token.username = user.username
         token.role = (user as any).role || 'admin'
-      }
-      // Always ensure admin role for logged-in users (fixes stale tokens)
-      if (token.username === 'admin' || token.email?.includes('admin')) {
-        token.role = 'admin'
       }
       return token
     },

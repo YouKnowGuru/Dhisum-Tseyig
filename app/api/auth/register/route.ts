@@ -92,18 +92,10 @@ export async function POST(req: NextRequest) {
     })
 
     if (existingUser) {
-      // Generic error to prevent enumeration
-      if (existingUser.email === normalizedEmail) {
-        return NextResponse.json(
-          { success: false, error: 'An account with this email already exists.' },
-          { status: 409 }
-        )
-      } else {
-        return NextResponse.json(
-          { success: false, error: 'Username is already taken.' },
-          { status: 409 }
-        )
-      }
+      return NextResponse.json(
+        { success: false, error: 'An account with these details already exists.' },
+        { status: 409 }
+      )
     }
 
     // Hash password with bcrypt (12 rounds)

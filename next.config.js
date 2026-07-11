@@ -12,10 +12,6 @@ const nextConfig = {
       },
     ],
   },
-  // Skip type checking during build (Next.js 16 internal type issue)
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   // Enable static export for Electron
   output: process.env.NEXT_EXPORT === 'true' ? 'export' : undefined,
   // Only include API routes in static export

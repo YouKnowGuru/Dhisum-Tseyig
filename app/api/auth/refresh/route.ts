@@ -133,48 +133,11 @@ export async function POST(req: NextRequest) {
 
 /**
  * GET /api/auth/refresh
- * Alternative refresh using Authorization header
+ * Returns 405 - use POST instead to avoid token leakage in URL logs
  */
 export async function GET(req: NextRequest) {
-  try {
-    const refreshToken = req.nextUrl.searchParams.get('token')
-    const deviceId = req.nextUrl.searchParams.get('deviceId')
-
-    if (!refreshToken) {
-      return NextResponse.json(
-        { success: false, error: 'Refresh token required' },
-        { status: 400 }
-      )
-    }
-
-    await connectDB()
-
-    const result = await rotateRefreshToken(refreshToken)
-
-    if (!result) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Session expired. Please log in again.',
-          requiresReauth: true,
-        },
-        { status: 401 }
-      )
-    }
-
-    return NextResponse.json({
-      success: true,
-      tokens: {
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
-        expiresAt: result.expiresAt.toISOString(),
-      },
-    })
-  } catch (error: any) {
-    console.error('Token refresh GET error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Token refresh failed' },
-      { status: 500 }
-    )
-  }
+  return NextResponse.json(
+    { success: false, error: 'Use POST method for token refresh' },
+    { status: 405 }
+  )
 }

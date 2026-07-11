@@ -57,8 +57,8 @@ export async function POST(req: NextRequest) {
   const rateLimitKey = clientIp
 
   try {
-    // Only apply rate limit in production to prevent local testing lockouts
-    if (process.env.NODE_ENV === 'production') {
+    // Apply rate limiting in all environments
+    {
       const rateLimit = checkRateLimit(rateLimitKey)
       if (!rateLimit.allowed) {
         return NextResponse.json(
@@ -385,7 +385,6 @@ export async function POST(req: NextRequest) {
           stepUpType: 'device_verification',
           email: maskedEmail,
           emailSent: emailSent,
-          emailError: emailError,
           maxAttempts: 3,
           lockoutMinutes: 15,
         },
