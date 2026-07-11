@@ -37,6 +37,7 @@ export const updateLicenseSchema = z.object({
   id: z.string().min(1, 'License ID is required'),
   status: z.enum(['active', 'inactive', 'expired', 'suspended']).optional(),
   expiryDate: z.string().optional(),
+  maxUsers: z.number().optional(),
 })
 
 export const extendLicenseSchema = z.object({

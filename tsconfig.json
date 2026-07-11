@@ -37,6 +37,8 @@
   ],
   "exclude": [
     "node_modules",
-    "New folder"
+    "New folder",
+    "temp_restore",
+    "temp_restore_2"
   ]
 }

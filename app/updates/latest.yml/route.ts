@@ -21,33 +21,28 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .lean()
 
     if (!latestUpdate) {
-      // Return 404 so electron-updater knows no update is available
       return new NextResponse('No updates available', { status: 404 })
     }
 
-    // Check if version is blocked
-    if (latestUpdate.status === 'blocked') {
+    const update = latestUpdate as any
+
+    if (update.status === 'blocked') {
       return new NextResponse('Update blocked', { status: 404 })
     }
 
-    // Build YAML content for electron-updater
-    // Format: https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/providers/GenericProvider.ts
-    // IMPORTANT: url must be a FULL absolute URL, not a relative path
-    const installerFileName = latestUpdate.fileUrl || `Jinda Setup ${latestUpdate.version}.exe`
-    
-    // Construct full GitHub download URL
-    // If fileUrl is already a full URL, use it; otherwise construct from GitHub repo
+    const installerFileName = update.fileUrl || `Jinda Setup ${update.version}.exe`
+
     const downloadUrl = installerFileName.startsWith('http')
       ? installerFileName
-      : `https://github.com/YouKnowGuru/dhisum-pos-download/releases/download/v${latestUpdate.version}/${encodeURIComponent(installerFileName)}`
-    
-    const sha512 = latestUpdate.fileSha512 || ''
-    const size = latestUpdate.fileSize || 0
-    const releaseDate = latestUpdate.releaseDate
-      ? new Date(latestUpdate.releaseDate).toISOString()
+      : `https://github.com/YouKnowGuru/dhisum-pos-download/releases/download/v${update.version}/${encodeURIComponent(installerFileName)}`
+
+    const sha512 = update.fileSha512 || ''
+    const size = update.fileSize || 0
+    const releaseDate = update.releaseDate
+      ? new Date(update.releaseDate).toISOString()
       : new Date().toISOString()
 
-    const yamlContent = `version: ${latestUpdate.version}
+    const yamlContent = `version: ${update.version}
 files:
   - url: ${downloadUrl}
     sha512: ${sha512}

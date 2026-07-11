@@ -28,6 +28,7 @@ const plans = [
     ],
     cta: 'Start Free Trial',
     href: '/download',
+    bestValue: true,
   },
   {
     name: 'Starter (1-Year)',
