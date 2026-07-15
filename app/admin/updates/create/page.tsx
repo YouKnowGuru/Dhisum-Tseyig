@@ -16,7 +16,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { ArrowLeft, Loader2, Package, Upload } from 'lucide-react'
+import { ArrowLeft, Loader2, Package, Github, ExternalLink } from 'lucide-react'
 
 export default function CreateUpdatePage() {
     const router = useRouter()
@@ -26,95 +26,24 @@ export default function CreateUpdatePage() {
     const [formData, setFormData] = useState({
         version: '',
         notes: '',
-        downloadUrl: '', // Kept for API compatibility, not displayed
+        downloadUrl: '',
         isLatest: 'false',
         fileUrl: '',
         fileSize: '',
         fileSha512: '',
         releaseDate: '',
     })
-    const [uploadFile, setUploadFile] = useState<File | null>(null)
-    const [isUploading, setIsUploading] = useState(false)
-
-    const handleUpload = async () => {
-        if (!uploadFile || !formData.version) {
-            setError('Please select a file and enter version first')
-            return null
-        }
-        
-        // Check file size (warn if > 50MB due to hosting limits)
-        const fileSizeMB = uploadFile.size / 1024 / 1024
-        if (fileSizeMB > 50) {
-            setError(`File is ${fileSizeMB.toFixed(0)}MB. Your hosting may limit uploads to ~50MB. If upload fails, use FTP to upload to public/downloads/ and paste the URL above.`)
-        }
-        
-        setIsUploading(true)
-        setError(null)
-        try {
-            const data = new FormData()
-            data.append('file', uploadFile)
-            data.append('version', formData.version)
-            
-            const controller = new AbortController()
-            const timeoutId = setTimeout(() => controller.abort(), 120000) // 2 min timeout
-            
-            const res = await fetch('/api/updates/upload', {
-                method: 'POST',
-                body: data,
-                signal: controller.signal,
-            })
-            clearTimeout(timeoutId)
-            
-            if (!res.ok) {
-                const errorText = await res.text()
-                let errorMsg = 'Upload failed'
-                try {
-                    const errJson = JSON.parse(errorText)
-                    errorMsg = errJson.error || errorMsg
-                } catch {}
-                
-                if (res.status === 413) {
-                    errorMsg = 'File too large for server. Upload via FTP to public/downloads/ instead.'
-                }
-                throw new Error(errorMsg)
-            }
-            
-            const result = await res.json()
-            if (result.success) {
-                setFormData(prev => ({
-                    ...prev,
-                    fileUrl: result.fileUrl,
-                    fileSize: String(result.fileSize),
-                }))
-                return result.fileUrl
-            } else {
-                throw new Error(result.error || 'Upload failed')
-            }
-        } catch (err: any) {
-            if (err.name === 'AbortError') {
-                setError('Upload timed out. File may be too large for your hosting plan.')
-            } else {
-                setError(err.message || 'Upload failed')
-            }
-            return null
-        } finally {
-            setIsUploading(false)
-        }
-    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsSubmitting(true)
         setError(null)
 
-        let fileUrl = formData.fileUrl
-        // If file selected but not uploaded yet, upload first
-        if (uploadFile && !formData.fileUrl.startsWith('http')) {
-            fileUrl = await handleUpload() || ''
-            if (!fileUrl) {
-                setIsSubmitting(false)
-                return
-            }
+        // Validate: downloadUrl must be provided
+        if (!formData.downloadUrl) {
+            setError('Please provide the GitHub Release download URL')
+            setIsSubmitting(false)
+            return
         }
 
         try {
@@ -123,8 +52,7 @@ export default function CreateUpdatePage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
-                    fileUrl,
-                    downloadUrl: fileUrl,
+                    fileUrl: formData.downloadUrl,
                     isLatest: formData.isLatest === 'true',
                     fileSize: formData.fileSize ? parseInt(formData.fileSize, 10) : undefined,
                 }),
@@ -166,6 +94,26 @@ export default function CreateUpdatePage() {
                         </Alert>
                     )}
 
+                    {/* GitHub Release Instructions */}
+                    <div className="mb-6 p-4 rounded-2xl bg-slate-900 text-white space-y-3">
+                        <div className="flex items-center gap-2">
+                            <Github className="h-5 w-5 text-bhutan-gold" />
+                            <h3 className="text-sm font-black uppercase tracking-widest">Step 1: Upload to GitHub Releases</h3>
+                        </div>
+                        <p className="text-xs text-slate-300 font-medium leading-relaxed">
+                            Files are hosted on GitHub Releases (free, up to 2GB per file). Upload your <code className="text-bhutan-gold">.exe</code> and <code className="text-bhutan-gold">latest.yml</code> as release assets, then paste the download URL below.
+                        </p>
+                        <a
+                            href="https://github.com/YouKnowGuru/dhisum-pos-download/releases/new"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-xs font-black text-bhutan-gold hover:underline"
+                        >
+                            Open GitHub New Release Page
+                            <ExternalLink className="h-3 w-3" />
+                        </a>
+                    </div>
+
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid md:grid-cols-2 gap-6">
                             <div className="space-y-2">
@@ -195,85 +143,58 @@ export default function CreateUpdatePage() {
                             </div>
                         </div>
 
+                        <div className="space-y-2">
+                            <Label htmlFor="downloadUrl">GitHub Release Download URL *</Label>
+                            <Input
+                                id="downloadUrl"
+                                value={formData.downloadUrl}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, downloadUrl: e.target.value })}
+                                placeholder="https://github.com/YouKnowGuru/dhisum-pos-download/releases/download/v1.0.5/Jinda.Setup.1.0.5.exe"
+                                required
+                            />
+                            <p className="text-xs text-slate-500">
+                                Paste the direct download URL from the GitHub release asset
+                            </p>
+                        </div>
+
                         <div className="grid md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <Label htmlFor="fileUrl">Download URL (direct link) *</Label>
-                                <Input
-                                    id="fileUrl"
-                                    value={formData.fileUrl}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, fileUrl: e.target.value })}
-                                    placeholder="https://jindapos.com/downloads/Jinda.Setup.1.0.1.exe"
-                                    required
-                                />
-                                <p className="text-xs text-gray-500">
-                                    Or upload file below — URL will be auto-filled
-                                </p>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="fileUpload">Upload Installer (.exe)</Label>
-                                <Input
-                                    id="fileUpload"
-                                    type="file"
-                                    accept=".exe"
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                        const file = e.target.files?.[0]
-                                        if (file) {
-                                            setUploadFile(file)
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                fileSize: String(file.size),
-                                            }))
-                                        }
-                                    }}
-                                />
-                                {uploadFile && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleUpload}
-                                        disabled={isUploading}
-                                        className="mt-2"
-                                    >
-                                        {isUploading ? (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Upload className="mr-2 h-4 w-4" />
-                                        )}
-                                        {isUploading ? 'Uploading...' : 'Upload File'}
-                                    </Button>
-                                )}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="fileSize">File Size (bytes)</Label>
+                                <Label htmlFor="fileSize">File Size (bytes) *</Label>
                                 <Input
                                     id="fileSize"
                                     type="number"
                                     value={formData.fileSize}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, fileSize: e.target.value })}
-                                    placeholder="205040356"
+                                    placeholder="205044958"
+                                    required
+                                />
+                                <p className="text-xs text-slate-500">
+                                    Find this in <code>release/latest.yml</code> after building
+                                </p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="releaseDate">Release Date</Label>
+                                <Input
+                                    id="releaseDate"
+                                    type="datetime-local"
+                                    value={formData.releaseDate}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, releaseDate: e.target.value })}
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="fileSha512">SHA-512 Hash (from latest.yml)</Label>
+                            <Label htmlFor="fileSha512">SHA-512 Hash (from latest.yml) *</Label>
                             <Input
                                 id="fileSha512"
                                 value={formData.fileSha512}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, fileSha512: e.target.value })}
-                                placeholder="v75J3wD9ztlNJmj7RLAazvK6B0lCEuTNOqfGt29DJs..."
+                                placeholder="fB63VXa0Dr2f0fLI8lPz1Vp00x8l0tdPBEN7Nqf+TKAGGLNUXTjjxQjEPDv0vehXN8wf6xzSnIhcs8IJHwF+1A=="
+                                required
                             />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="releaseDate">Release Date</Label>
-                            <Input
-                                id="releaseDate"
-                                type="datetime-local"
-                                value={formData.releaseDate}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, releaseDate: e.target.value })}
-                            />
+                            <p className="text-xs text-slate-500">
+                                Copy the sha512 value from <code>release/latest.yml</code> generated by electron-builder
+                            </p>
                         </div>
 
                         <div className="space-y-2">

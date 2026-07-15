@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { writeFile } from 'fs/promises'
-import { mkdir } from 'fs/promises'
-import path from 'path'
 import { authOptions } from '@/lib/auth/auth.config'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-// POST /api/updates/upload - Upload installer file
+// POST /api/updates/upload - Upload installer file info (NOT the file itself)
+// Files are hosted on GitHub Releases (free, 2GB limit).
+// This endpoint accepts the GitHub release URL + metadata and returns it
+// for the admin form to use.
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Check authentication
@@ -18,57 +18,32 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    const formData = await req.formData()
-    const file = formData.get('file') as File
-    const version = formData.get('version') as string
+    const body = await req.json()
+    const { githubUrl, fileName, fileSize } = body
 
-    if (!file || !version) {
-      return NextResponse.json({ error: 'File and version required' }, { status: 400 })
+    if (!githubUrl || !fileName) {
+      return NextResponse.json(
+        { error: 'GitHub release URL and file name are required' },
+        { status: 400 }
+      )
     }
 
-    // Validate file type
-    if (!file.name.endsWith('.exe')) {
-      return NextResponse.json({ error: 'Only .exe files allowed' }, { status: 400 })
+    // Validate URL is from GitHub
+    if (!githubUrl.includes('github.com/')) {
+      return NextResponse.json(
+        { error: 'URL must be a GitHub release download URL' },
+        { status: 400 }
+      )
     }
-
-    // Validate file size (max 500MB)
-    const maxSize = 500 * 1024 * 1024
-    if (file.size > maxSize) {
-      return NextResponse.json({ error: 'File too large (max 500MB)' }, { status: 400 })
-    }
-
-    // Validate version format (prevent path traversal)
-    if (!/^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$/.test(version)) {
-      return NextResponse.json({ error: 'Invalid version format' }, { status: 400 })
-    }
-
-    // Create uploads directory
-    const uploadDir = path.join(process.cwd(), 'public', 'downloads')
-    await mkdir(uploadDir, { recursive: true })
-
-    // Save file
-    const fileName = `Jinda.Setup.${version}.exe`
-    const filePath = path.join(uploadDir, path.basename(fileName))
-    
-    console.log(`[Upload] Starting upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`)
-    
-    const bytes = await file.arrayBuffer()
-    await writeFile(filePath, Buffer.from(bytes))
-    
-    console.log(`[Upload] Saved to: ${filePath}`)
-
-    // Generate file URL
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://jindapos.com'
-    const fileUrl = `${baseUrl}/downloads/${fileName}`
 
     return NextResponse.json({
       success: true,
-      fileUrl,
+      fileUrl: githubUrl,
       fileName,
-      fileSize: file.size,
+      fileSize: fileSize || 0,
     })
   } catch (error: any) {
     console.error('[Upload] Error:', error)
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to process upload info' }, { status: 500 })
   }
 }

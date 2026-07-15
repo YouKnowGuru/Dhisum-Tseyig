@@ -3,21 +3,16 @@ export const dynamic = 'force-dynamic'
 import connectDB from '@/lib/db/mongodb'
 import Update from '@/lib/models/Update'
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://jindapos.com'
+const GITHUB_OWNER = 'YouKnowGuru'
+const GITHUB_REPO = 'dhisum-pos-download'
+const GITHUB_BASE = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download`
 
 /**
  * GET /updates/latest.yml
  * Returns electron-updater compatible YAML for Windows NSIS.
  * This is what electron-updater fetches to check for updates.
  *
- * The YAML must contain:
- * - version: the new version number
- * - files[].url: direct download URL to the .exe installer
- * - files[].sha512: base64-encoded SHA-512 hash of the installer
- * - files[].size: file size in bytes
- * - path: same as files[0].url
- * - sha512: same as files[0].sha512
- * - releaseDate: ISO date string
+ * Download URLs point to GitHub Releases (free hosting, 2GB per file).
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
@@ -43,18 +38,18 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     // Resolve the download URL:
-    // 1. Use downloadUrl if it's a full HTTP URL
-    // 2. Use fileUrl if it's a full HTTP URL
-    // 3. Fall back to server-hosted /downloads/Jinda.Setup.{version}.exe
+    // 1. Use downloadUrl from DB if it's a full HTTP URL (admin can paste any direct link)
+    // 2. Use fileUrl from DB if it's a full HTTP URL
+    // 3. Fall back to GitHub Releases URL
     let downloadUrl = ''
     if (update.downloadUrl && update.downloadUrl.startsWith('http')) {
       downloadUrl = update.downloadUrl
     } else if (update.fileUrl && update.fileUrl.startsWith('http')) {
       downloadUrl = update.fileUrl
     } else {
-      // Server-hosted fallback — file uploaded via admin panel
+      // GitHub Releases fallback — file uploaded as release asset
       const fileName = update.fileUrl || `Jinda.Setup.${update.version}.exe`
-      downloadUrl = `${BASE_URL}/downloads/${fileName}`
+      downloadUrl = `${GITHUB_BASE}/v${update.version}/${fileName}`
     }
 
     const sha512 = update.fileSha512 || ''
