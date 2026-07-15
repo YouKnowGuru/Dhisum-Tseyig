@@ -50,9 +50,6 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* DNS prefetch for third-party resources */}
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-        {/* Favicon */}
-        <link rel="icon" href="/images/logo.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/images/logo.png" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         {/* Global JSON-LD Structured Data */}

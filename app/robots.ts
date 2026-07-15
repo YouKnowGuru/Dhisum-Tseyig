@@ -11,10 +11,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           '/admin/',
           '/api/',
-          '/electron/',
-          '/license-activate/',
-          '/verify-email/',
-          '/reset-password/',
         ],
       },
       {
@@ -23,10 +19,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           '/admin/',
           '/api/',
-          '/electron/',
-          '/license-activate/',
-          '/verify-email/',
-          '/reset-password/',
         ],
       },
     ],

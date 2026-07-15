@@ -7,8 +7,10 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // 1. Technical SEO: Set noindex header for admin and system pages
-  const noIndexRoutes = ['/admin', '/api/admin', '/license', '/license-activate', '/reset-password', '/verify-email']
-  if (noIndexRoutes.some(route => pathname.startsWith(route))) {
+  // NOTE: Do NOT add these to robots.txt disallow — Googlebot must be able to
+  // crawl them to see the noindex header. Otherwise you get "Blocked by robots.txt" errors.
+  const noIndexRoutes = ['/admin', '/api/admin', '/license-activate', '/reset-password', '/verify-email']
+  if (noIndexRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')
   }
 
