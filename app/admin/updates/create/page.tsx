@@ -104,7 +104,7 @@ export default function CreateUpdatePage() {
                             Files are hosted on GitHub Releases (free, up to 2GB per file). Upload your <code className="text-bhutan-gold">.exe</code> and <code className="text-bhutan-gold">latest.yml</code> as release assets, then paste the download URL below.
                         </p>
                         <a
-                            href="https://github.com/YouKnowGuru/dhisum-pos-download/releases/new"
+                            href="https://github.com/YouKnowGuru/Dhisum-Tseyig/releases/new"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 text-xs font-black text-bhutan-gold hover:underline"
@@ -149,7 +149,7 @@ export default function CreateUpdatePage() {
                                 id="downloadUrl"
                                 value={formData.downloadUrl}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, downloadUrl: e.target.value })}
-                                placeholder="https://github.com/YouKnowGuru/dhisum-pos-download/releases/download/v1.0.5/Jinda.Setup.1.0.5.exe"
+                                placeholder="https://github.com/YouKnowGuru/Dhisum-Tseyig/releases/download/v1.0.5/Jinda.Setup.1.0.5.exe"
                                 required
                             />
                             <p className="text-xs text-slate-500">

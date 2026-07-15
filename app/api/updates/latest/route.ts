@@ -28,7 +28,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({
         version: '1.0.0',
         notes: 'Initial release',
-        downloadUrl: 'https://download.sitejinda.com/setup.exe',
+        downloadUrl: 'https://github.com/YouKnowGuru/Dhisum-Tseyig/releases/download/v1.0/Jinda.Setup.1.0.0.exe',
         blocked: false,
         forced: false,
         releaseDate: new Date().toISOString(),

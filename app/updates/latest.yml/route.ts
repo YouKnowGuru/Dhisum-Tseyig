@@ -4,7 +4,7 @@ import connectDB from '@/lib/db/mongodb'
 import Update from '@/lib/models/Update'
 
 const GITHUB_OWNER = 'YouKnowGuru'
-const GITHUB_REPO = 'dhisum-pos-download'
+const GITHUB_REPO = 'Dhisum-Tseyig'
 const GITHUB_BASE = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download`
 
 /**
