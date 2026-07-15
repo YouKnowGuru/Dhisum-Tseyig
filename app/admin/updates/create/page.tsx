@@ -27,7 +27,7 @@ export default function CreateUpdatePage() {
         version: '',
         notes: '',
         downloadUrl: '',
-        isLatest: 'false',
+        isLatest: 'true',
         fileUrl: '',
         fileSize: '',
         fileSha512: '',

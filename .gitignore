@@ -70,3 +70,19 @@ build-electron.bat
 # Documentation files (except README)
 *.md
 !README.md
+
+# Electron Client App
+New folder/
+dist-electron/
+
+# Test Files
+__tests__/
+tests/
+*.test.js
+*.test.jsx
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.jsx
+*.spec.ts
+*.spec.tsx

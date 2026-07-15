@@ -15,7 +15,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     await connectDB()
 
-    // Find the latest PUBLISHED update that is not blocked
+    // Find the latest PUBLISHED update (not draft or blocked)
     const latestUpdate = await Update.findOne({
       isLatest: true,
       status: { $in: ['published', 'rollbacked'] },
@@ -35,14 +35,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       })
     }
 
-    // Check if version is blocked
-    const isBlocked = latestUpdate.status === 'blocked'
-
+    // The query above already filters out 'blocked' status, so
+    // the returned update is guaranteed to not be blocked.
     return NextResponse.json({
       version: latestUpdate.version,
       notes: latestUpdate.notes,
       downloadUrl: latestUpdate.downloadUrl,
-      blocked: isBlocked,
+      blocked: false,
       forced: latestUpdate.forced || false,
       rolloutPercent: latestUpdate.rolloutPercent || 100,
       releaseDate: latestUpdate.createdAt,

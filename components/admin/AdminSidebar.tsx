@@ -134,13 +134,7 @@ export default function AdminSidebar({ isCollapsed, setIsCollapsed }: AdminSideb
             {!isCollapsed && <span>Sign Out</span>}
           </Button>
 
-          {!isCollapsed && (
-            <div className="mt-4 pt-4 border-t border-slate-50 text-center">
-              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-tight">
-                Powered by<br />Our Store Tsirang
-              </p>
-            </div>
-          )}
+
         </div>
       </div>
     </aside>
