@@ -115,17 +115,17 @@ export default function SecurityClient() {
       </section>
 
       {/* Security Stats */}
-      <section className="py-10 md:py-14 border-b bg-white">
+      <section className="py-10 md:py-14 border-b bg-white dark:bg-slate-900">
         <div className="container px-4 md:px-6">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {securityStats.map((stat) => (
-              <div key={stat.label} className="text-center p-4 rounded-2xl bg-slate-50 border border-slate-100">
+              <div key={stat.label} className="text-center p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                 <div className="w-10 h-10 rounded-xl bg-bhutan-maroon/10 text-bhutan-maroon flex items-center justify-center mx-auto mb-3">
                   <stat.icon className="w-5 h-5" />
                 </div>
-                <p className="text-lg font-black text-slate-900">{stat.value}</p>
+                <p className="text-lg font-black text-slate-900 dark:text-white">{stat.value}</p>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{stat.label}</p>
-                <p className="text-[9px] text-slate-500 font-medium">{stat.sublabel}</p>
+                <p className="text-[9px] text-slate-500 dark:text-slate-400 font-medium">{stat.sublabel}</p>
               </div>
             ))}
           </div>
@@ -133,27 +133,27 @@ export default function SecurityClient() {
       </section>
 
       {/* Security Features Grid */}
-      <section className="py-16 md:py-20 bg-slate-50/50">
+      <section className="py-16 md:py-20 bg-slate-50/50 dark:bg-slate-800/50">
         <div className="container px-4 md:px-6">
           <div className="text-center max-w-xl mx-auto mb-12">
             <h2 className="text-2xl md:text-3xl font-black mb-3 tracking-tight">12 Layers of Protection</h2>
-            <p className="text-sm text-slate-500 font-medium">Every part of the system is designed with security in mind.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Every part of the system is designed with security in mind.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {securityFeatures.map((feature) => (
-              <InteractiveCard key={feature.title} className="p-5 md:p-6 bg-white border border-slate-100 shadow-sm">
+              <InteractiveCard key={feature.title} className="p-5 md:p-6 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
                 <div className="flex items-start gap-4 mb-4">
                   <div className="w-11 h-11 rounded-xl bg-bhutan-maroon/10 text-bhutan-maroon flex-shrink-0 group-hover:bg-bhutan-maroon group-hover:text-bhutan-gold transition-all duration-300">
                     <feature.icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm md:text-base font-black text-slate-900 tracking-tight">{feature.title}</h3>
-                    <p className="text-[10px] md:text-xs text-slate-500 font-medium leading-relaxed mt-1">{feature.description}</p>
+                    <h3 className="text-sm md:text-base font-black text-slate-900 dark:text-white tracking-tight">{feature.title}</h3>
+                    <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed mt-1">{feature.description}</p>
                   </div>
                 </div>
                 <ul className="space-y-1.5">
                   {feature.details.map((detail) => (
-                    <li key={detail} className="flex items-center gap-2 text-[10px] md:text-xs font-bold text-slate-600">
+                    <li key={detail} className="flex items-center gap-2 text-[10px] md:text-xs font-bold text-slate-600 dark:text-slate-300">
                       <CheckCircle className="w-3 h-3 text-emerald-500 flex-shrink-0" />
                       {detail}
                     </li>
@@ -166,12 +166,12 @@ export default function SecurityClient() {
       </section>
 
       {/* Security Architecture */}
-      <section className="py-16 md:py-20 bg-white">
+      <section className="py-16 md:py-20 bg-white dark:bg-slate-900">
         <div className="container px-4 md:px-6">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-2xl md:text-3xl font-black mb-3 tracking-tight">How Your Data Is Protected</h2>
-              <p className="text-sm text-slate-500 font-medium">A complete picture of our security approach.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">A complete picture of our security approach.</p>
             </div>
 
             <div className="space-y-6">
@@ -213,7 +213,7 @@ export default function SecurityClient() {
                   icon: Fingerprint,
                 },
               ].map((item) => (
-                <div key={item.step} className="flex gap-5 p-5 md:p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-md transition-all">
+                <div key={item.step} className="flex gap-5 p-5 md:p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 hover:shadow-md transition-all">
                   <div className="flex flex-col items-center">
                     <div className="w-10 h-10 rounded-xl bg-bhutan-maroon/10 text-bhutan-maroon flex items-center justify-center flex-shrink-0">
                       <item.icon className="w-5 h-5" />
@@ -223,9 +223,9 @@ export default function SecurityClient() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-[10px] font-black text-bhutan-maroon uppercase tracking-widest">Step {item.step}</span>
-                      <h3 className="text-sm md:text-base font-black text-slate-900">{item.title}</h3>
+                      <h3 className="text-sm md:text-base font-black text-slate-900 dark:text-white">{item.title}</h3>
                     </div>
-                    <p className="text-xs md:text-sm text-slate-500 font-medium leading-relaxed">{item.description}</p>
+                    <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">{item.description}</p>
                   </div>
                 </div>
               ))}
@@ -244,7 +244,7 @@ export default function SecurityClient() {
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link href="/download">
-              <Button size="lg" className="bg-bhutan-gold text-bhutan-maroon-dark hover:bg-white font-black h-14 px-8 rounded-2xl shadow-xl transition-all">
+              <Button size="lg" className="bg-bhutan-gold text-bhutan-maroon-dark hover:bg-white dark:bg-slate-900 font-black h-14 px-8 rounded-2xl shadow-xl transition-all">
                 Download Free Trial
               </Button>
             </Link>

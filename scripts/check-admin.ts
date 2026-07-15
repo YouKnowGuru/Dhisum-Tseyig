@@ -42,7 +42,6 @@ async function checkAdmin() {
             if (envPassword) {
                 const isValid = await bcrypt.compare(envPassword, admin.passwordHash)
                 console.log(`Password matches .env ADMIN_PASSWORD: ${isValid}`)
-                console.log(`Password length in .env: ${envPassword.length}`)
             } else {
                 console.log('ADMIN_PASSWORD not found in .env')
             }

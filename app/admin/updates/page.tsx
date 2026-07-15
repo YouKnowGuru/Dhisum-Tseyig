@@ -133,7 +133,7 @@ export default function UpdatesPage() {
     const getStatusBadge = (update: Update) => {
         if (update.status === 'blocked') {
             return (
-                <Badge className="bg-red-100 text-red-700 border-none font-black uppercase tracking-widest text-[9px] px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
+                <Badge className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 border-none font-black uppercase tracking-widest text-[9px] px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
                     <Ban className="h-3 w-3" />
                     Blocked
                 </Badge>
@@ -141,7 +141,7 @@ export default function UpdatesPage() {
         }
         if (update.status === 'rollbacked') {
             return (
-                <Badge className="bg-amber-100 text-amber-700 border-none font-black uppercase tracking-widest text-[9px] px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
+                <Badge className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border-none font-black uppercase tracking-widest text-[9px] px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
                     <Undo2 className="h-3 w-3" />
                     Rollbacked
                 </Badge>
@@ -149,7 +149,7 @@ export default function UpdatesPage() {
         }
         if (update.isLatest && update.status === 'published') {
             return (
-                <Badge className="bg-green-100 text-green-700 border-none font-black uppercase tracking-widest text-[9px] px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
+                <Badge className="bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border-none font-black uppercase tracking-widest text-[9px] px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
                     <CheckCircle2 className="h-3 w-3" />
                     Production
                 </Badge>
@@ -157,14 +157,14 @@ export default function UpdatesPage() {
         }
         if (update.status === 'published') {
             return (
-                <Badge className="bg-blue-100 text-blue-700 border-none font-black uppercase tracking-widest text-[9px] px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
+                <Badge className="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border-none font-black uppercase tracking-widest text-[9px] px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
                     <Rocket className="h-3 w-3" />
                     Published
                 </Badge>
             )
         }
         return (
-            <Badge className="bg-slate-100 text-slate-500 border-none font-black uppercase tracking-widest text-[9px] px-3 py-1 rounded-full w-fit">
+            <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-none font-black uppercase tracking-widest text-[9px] px-3 py-1 rounded-full w-fit">
                 Draft
             </Badge>
         )
@@ -173,14 +173,14 @@ export default function UpdatesPage() {
     return (
         <div className="space-y-10 stagger-in">
             {/* Header */}
-            <div className="flex items-center justify-between bg-white p-8 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
+            <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-bhutan-gold/5 blur-3xl -mr-32 -mt-32" />
                 <div className="relative z-10 flex items-center gap-6">
                     <div className="h-14 w-14 rounded-2xl bg-bhutan-maroon flex items-center justify-center shadow-lg shadow-bhutan-maroon/20">
                         <RefreshCw className="h-7 w-7 text-bhutan-gold" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Software Releases</h1>
+                        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Software Releases</h1>
                         <p className="text-sm font-bold text-slate-400">
                             Manage and deploy desktop application versions
                         </p>
@@ -195,11 +195,11 @@ export default function UpdatesPage() {
             </div>
 
             {/* Updates Table */}
-            <Card className="border-slate-100 shadow-sm rounded-3xl overflow-hidden mb-12">
+            <Card className="border-slate-100 dark:border-slate-800 shadow-sm rounded-3xl overflow-hidden mb-12">
                 <CardContent className="p-0">
                     <Table>
-                        <TableHeader className="bg-slate-50/50">
-                            <TableRow className="border-slate-100 hover:bg-transparent">
+                        <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50">
+                            <TableRow className="border-slate-100 dark:border-slate-800 hover:bg-transparent">
                                 <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-400 py-6 pl-8">Version</TableHead>
                                 <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-400 py-6">Release Date</TableHead>
                                 <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-400 py-6">Status</TableHead>
@@ -229,14 +229,14 @@ export default function UpdatesPage() {
                                 </TableRow>
                             ) : (
                                 updates.map((update: Update) => (
-                                    <TableRow key={update._id} className="border-slate-50 hover:bg-slate-50/50 transition-colors group">
+                                    <TableRow key={update._id} className="border-slate-50 hover:bg-slate-50/50 dark:bg-slate-800/50 transition-colors group">
                                         <TableCell className="pl-8 py-6">
                                             <div className="flex items-center gap-3">
                                                 <div className="h-10 w-10 rounded-xl bg-bhutan-maroon/5 flex items-center justify-center text-bhutan-maroon font-black text-xs">
                                                     v{update.version.split('.')[0]}
                                                 </div>
                                                 <div>
-                                                    <span className="font-black text-slate-800 tracking-tight block">v{update.version}</span>
+                                                    <span className="font-black text-slate-800 dark:text-white tracking-tight block">v{update.version}</span>
                                                     {update.forced && (
                                                         <span className="text-[10px] text-red-500 font-bold flex items-center gap-1">
                                                             <AlertTriangle className="h-3 w-3" />
@@ -247,7 +247,7 @@ export default function UpdatesPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell className="py-6">
-                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
                                                 <Calendar className="h-3.5 w-3.5 text-slate-300" />
                                                 <span>{new Date(update.createdAt).toLocaleDateString()}</span>
                                             </div>
@@ -256,7 +256,7 @@ export default function UpdatesPage() {
                                             {getStatusBadge(update)}
                                         </TableCell>
                                         <TableCell className="py-6">
-                                            <span className="text-xs font-bold text-slate-500">
+                                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                                                 {update.rolloutPercent || 100}%
                                             </span>
                                         </TableCell>
@@ -265,7 +265,7 @@ export default function UpdatesPage() {
                                                 href={update.downloadUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 text-xs font-bold text-slate-600 hover:bg-bhutan-maroon hover:text-white transition-all duration-300"
+                                                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-bhutan-maroon hover:text-white transition-all duration-300"
                                             >
                                                 <span>Artifact</span>
                                                 <ExternalLink className="h-3 w-3" />
@@ -280,7 +280,7 @@ export default function UpdatesPage() {
                                                         size="icon"
                                                         onClick={() => changeStatus(update._id, 'published', true)}
                                                         disabled={actionLoading === update._id}
-                                                        className="h-9 w-9 rounded-xl text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
+                                                        className="h-9 w-9 rounded-xl text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all"
                                                         title="Publish"
                                                     >
                                                         <Rocket className="h-4 w-4" />
@@ -294,7 +294,7 @@ export default function UpdatesPage() {
                                                         size="icon"
                                                         onClick={() => changeStatus(update._id, 'blocked', false)}
                                                         disabled={actionLoading === update._id}
-                                                        className="h-9 w-9 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 transition-all"
+                                                        className="h-9 w-9 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
                                                         title="Block"
                                                     >
                                                         <Ban className="h-4 w-4" />
@@ -308,7 +308,7 @@ export default function UpdatesPage() {
                                                         size="icon"
                                                         onClick={() => rollbackTo(update._id)}
                                                         disabled={actionLoading === update._id}
-                                                        className="h-9 w-9 rounded-xl text-amber-500 hover:text-amber-600 hover:bg-amber-50 transition-all"
+                                                        className="h-9 w-9 rounded-xl text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-all"
                                                         title="Rollback to this version"
                                                     >
                                                         <Undo2 className="h-4 w-4" />
@@ -320,7 +320,7 @@ export default function UpdatesPage() {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="h-9 w-9 rounded-xl text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all"
+                                                        className="h-9 w-9 rounded-xl text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all"
                                                         title="Edit"
                                                     >
                                                         <Pencil className="h-4 w-4" />
@@ -332,7 +332,7 @@ export default function UpdatesPage() {
                                                     variant="ghost"
                                                     size="icon"
                                                     onClick={() => deleteUpdate(update._id)}
-                                                    className="h-9 w-9 rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                                                    className="h-9 w-9 rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>

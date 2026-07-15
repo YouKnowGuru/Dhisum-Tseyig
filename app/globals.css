@@ -29,25 +29,25 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 46 100% 50%;
-    --primary-foreground: 0 100% 25.1%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --background: 222 47% 5%;
+    --foreground: 210 40% 96%;
+    --card: 222 47% 7%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 47% 7%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 0 100% 25.1%;
+    --primary-foreground: 46 100% 50%;
+    --secondary: 217 33% 12%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 217 33% 12%;
+    --muted-foreground: 215 20% 58%;
+    --accent: 46 100% 50%;
+    --accent-foreground: 0 100% 25.1%;
+    --destructive: 0 63% 35%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 46 100% 50%;
+    --border: 217 33% 15%;
+    --input: 217 33% 15%;
+    --ring: 0 100% 25.1%;
   }
 }
 
@@ -60,6 +60,42 @@
     @apply bg-background text-foreground;
     font-family: 'Outfit', sans-serif;
   }
+
+  /* Dark-mode-aware semantic surface helpers */
+  .surface-base { @apply bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100; }
+  .surface-card { @apply bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100; }
+  .surface-muted { @apply bg-slate-50 text-slate-900 dark:bg-slate-900/50 dark:text-slate-100; }
+  .surface-border { @apply border-slate-100 dark:border-slate-800; }
+  .text-muted-custom { @apply text-slate-500 dark:text-slate-400; }
+  .text-heading { @apply text-slate-900 dark:text-white; }
+}
+
+/* Smooth theme transition */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 200ms;
+  transition-timing-function: ease;
+}
+
+/* But don't transition transforms or it'll feel laggy */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Dark-mode-aware scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }
 
 /* Custom scrollbar */
@@ -121,6 +157,97 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Animated gradient mesh for hero background */
+@keyframes mesh-shift {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -20px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+}
+
+.mesh-blob {
+  animation: mesh-shift 12s ease-in-out infinite;
+}
+
+/* Aurora sweep for hero */
+@keyframes aurora {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.15;
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+    opacity: 0;
+  }
+}
+
+.aurora-sweep {
+  animation: aurora 8s ease-in-out infinite;
+}
+
+/* Bar chart grow animation for hero mockup */
+@keyframes bar-grow {
+  from {
+    height: 0%;
+  }
+}
+
+.bar-grow {
+  animation: bar-grow 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Scroll indicator bounce */
+@keyframes scroll-bounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(8px);
+    opacity: 0.3;
+  }
+}
+
+.scroll-bounce {
+  animation: scroll-bounce 1.8s ease-in-out infinite;
+}
+
+/* Live counter glow pulse */
+@keyframes counter-glow {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4), 0 0 20px rgba(255, 215, 0, 0.2);
+  }
+  50% {
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.7), 0 0 30px rgba(255, 215, 0, 0.4);
+  }
+}
+
+.counter-glow {
+  animation: counter-glow 3s ease-in-out infinite;
+}
+
+/* Orbit rotation for floating badges */
+@keyframes orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.orbit-slow {
+  animation: orbit 20s linear infinite;
 }
 
 .slide-in {
@@ -310,14 +437,99 @@
   }
 }
 
+@keyframes marquee-reverse {
+  0% {
+    transform: translateX(-50%);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
+}
+
 .animate-marquee {
   display: flex;
   width: max-content;
   animation: marquee 30s linear infinite;
 }
 
-.animate-marquee:hover {
+.animate-marquee-reverse {
+  display: flex;
+  width: max-content;
+  animation: marquee-reverse 35s linear infinite;
+}
+
+.animate-marquee:hover,
+.animate-marquee-reverse:hover {
   animation-play-state: paused;
+}
+
+/* Slow marquee for review cards */
+@keyframes marquee-slow {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-slow-reverse {
+  0% {
+    transform: translateX(-50%);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-marquee-slow {
+  display: flex;
+  width: max-content;
+  animation: marquee-slow 60s linear infinite;
+}
+
+.animate-marquee-slow-reverse {
+  display: flex;
+  width: max-content;
+  animation: marquee-slow-reverse 70s linear infinite;
+}
+
+.animate-marquee-slow:hover,
+.animate-marquee-slow-reverse:hover {
+  animation-play-state: paused;
+}
+
+/* 3D Tilt marquee card */
+.marquee-card-3d {
+  transform-style: preserve-3d;
+  perspective: 600px;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+}
+
+.marquee-card-3d:hover {
+  transform: translateY(-6px) rotateX(8deg) scale(1.05);
+}
+
+/* Marquee shimmer text */
+@keyframes shimmer-text {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.marquee-shimmer {
+  background: linear-gradient(90deg, #800000 0%, #FFD700 25%, #FF8C00 50%, #FFD700 75%, #800000 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-text 3s linear infinite;
 }
 
 /* Lighting / Glow for cards */

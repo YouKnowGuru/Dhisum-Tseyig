@@ -62,7 +62,7 @@ const socials = [
 
 export default function Footer() {
   return (
-    <footer className="relative bg-slate-950 text-white pt-20 pb-10 overflow-hidden border-t border-white/5">
+    <footer className="relative bg-slate-950 text-white pt-20 pb-10 overflow-hidden border-t border-white/5" suppressHydrationWarning>
       {/* Background Orbs */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-bhutan-maroon/10 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-bhutan-gold/5 blur-[120px] rounded-full pointer-events-none" />
@@ -73,7 +73,7 @@ export default function Footer() {
           <div className="lg:col-span-4 space-y-8">
             <div className="space-y-4">
               <Link href="/" className="flex items-center gap-3 group w-fit">
-                <div className="relative h-16 w-16 flex items-center justify-center rounded-full bg-white shadow-2xl ring-4 ring-white/10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 ease-out overflow-hidden">
+                <div className="relative h-16 w-16 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-2xl ring-4 ring-white/10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 ease-out overflow-hidden">
                   <Image
                     src="/images/logo.png"
                     alt="Jinda Logo"
@@ -225,7 +225,7 @@ export default function Footer() {
 
           <div className="flex items-center gap-4">
             <Link href="/download">
-              <Button variant="outline" className="h-10 px-6 rounded-xl border-white/10 bg-white/5 text-white hover:bg-white hover:text-slate-950 font-black text-[10px] uppercase tracking-widest transition-all">
+              <Button variant="outline" className="h-10 px-6 rounded-xl border-white/10 bg-white/5 text-white hover:bg-white dark:hover:bg-slate-100 hover:text-slate-950 font-black text-[10px] uppercase tracking-widest transition-all">
                 <Download className="mr-2 h-3.5 w-3.5" />
                 Version 1.0.4
               </Button>

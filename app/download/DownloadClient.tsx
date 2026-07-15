@@ -115,10 +115,10 @@ export default function DownloadClient() {
         </div>
       </section>
 
-      <section className="py-10 md:py-14 bg-white">
+      <section className="py-10 md:py-14 bg-white dark:bg-slate-900">
         <div className="container px-4 md:px-6">
           {error && (
-            <Alert variant="destructive" className="mb-6 max-w-2xl mx-auto rounded-xl border-red-100 bg-red-50 text-red-900">
+            <Alert variant="destructive" className="mb-6 max-w-2xl mx-auto rounded-xl border-red-100 bg-red-50 dark:bg-red-950/30 text-red-900">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="font-bold text-xs">{error}</AlertDescription>
             </Alert>
@@ -141,7 +141,7 @@ export default function DownloadClient() {
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Requirements</p>
                   <ul className="space-y-1.5">
                     {download.requirements.map((req) => (
-                      <li key={req} className="flex items-center gap-2 text-[10px] md:text-xs font-bold text-slate-600">
+                      <li key={req} className="flex items-center gap-2 text-[10px] md:text-xs font-bold text-slate-600 dark:text-slate-300">
                         <Check className="h-3 w-3 text-bhutan-maroon flex-shrink-0" />
                         {req}
                       </li>
@@ -168,14 +168,14 @@ export default function DownloadClient() {
 
           {/* What's Included */}
           <div className="max-w-3xl mx-auto mt-10 md:mt-16">
-            <div className="bg-slate-50 rounded-2xl p-5 md:p-8 border border-slate-100 relative overflow-hidden">
-              <h3 className="text-sm md:text-base font-black mb-4 flex items-center gap-2 text-slate-900 tracking-tight">
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-5 md:p-8 border border-slate-100 dark:border-slate-800 relative overflow-hidden">
+              <h3 className="text-sm md:text-base font-black mb-4 flex items-center gap-2 text-slate-900 dark:text-white tracking-tight">
                 <Shield className="h-4 w-4 text-bhutan-maroon" />
                 What's Included — 20 Modules
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4">
                 {modulesIncluded.map((item) => (
-                  <div key={item} className="flex items-center gap-2 text-[10px] md:text-xs font-bold text-slate-600">
+                  <div key={item} className="flex items-center gap-2 text-[10px] md:text-xs font-bold text-slate-600 dark:text-slate-300">
                     <Check className="h-3 w-3 text-bhutan-maroon flex-shrink-0" />
                     <span>{item}</span>
                   </div>

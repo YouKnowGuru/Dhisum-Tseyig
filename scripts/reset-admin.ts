@@ -29,7 +29,11 @@ async function resetAdmin() {
         console.log('Connected to MongoDB')
 
         const username = 'admin'
-        const password = process.argv[2] || 'testpassword123'
+        const password = process.argv[2]
+        if (!password) {
+            console.error('Usage: tsx reset-admin.ts <new-password>')
+            process.exit(1)
+        }
 
         // Hash password
         const passwordHash = await bcrypt.hash(password, 12)
@@ -40,7 +44,7 @@ async function resetAdmin() {
             { new: true, upsert: true }
         )
 
-        console.log(`Admin password reset to: ${password}`)
+        console.log('Admin password reset successfully (not shown for security)')
         console.log(`Username: ${username}`)
         console.log(`Update result: ${result ? 'Success' : 'Failed'}`)
 

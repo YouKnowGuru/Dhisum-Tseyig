@@ -21,11 +21,11 @@ function AdminLayoutContent({
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/50 gap-4">
         <div className="relative">
           <div className="h-16 w-16 rounded-2xl border-4 border-bhutan-maroon/20 border-t-bhutan-maroon animate-spin shadow-lg" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative h-10 w-10 flex items-center justify-center rounded-full bg-white shadow-inner overflow-hidden">
+            <div className="relative h-10 w-10 flex items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-inner overflow-hidden">
               <Image
                 src="/images/logo.png"
                 alt="Logo"
@@ -52,7 +52,7 @@ function AdminLayoutContent({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
+    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-800/50">
       <AdminSidebar
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}

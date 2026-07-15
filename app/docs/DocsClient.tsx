@@ -155,7 +155,7 @@ export default function DocsClient() {
       </section>
 
       {/* Quick Links */}
-      <section className="py-6 border-b bg-slate-50/50">
+      <section className="py-6 border-b bg-slate-50/50 dark:bg-slate-800/50">
         <div className="container">
           <div className="flex flex-wrap justify-center gap-4">
             {quickLinks.map((link) => (
@@ -245,7 +245,7 @@ export default function DocsClient() {
                   description: 'Open the POS screen. Search or scan products, add to cart, select payment method, and print the invoice.',
                 },
               ].map((item) => (
-                <div key={item.step} className="bg-card rounded-xl p-6 border border-slate-100 hover:shadow-md transition-shadow">
+                <div key={item.step} className="bg-card rounded-xl p-6 border border-slate-100 dark:border-slate-800 hover:shadow-md transition-shadow">
                   <div className="flex items-start gap-4">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-bhutan-maroon text-bhutan-gold font-bold text-sm flex-shrink-0">
                       {item.step}
@@ -282,7 +282,7 @@ export default function DocsClient() {
                 Contact our support team for setup help, GST questions, or any technical issue.
               </p>
               <Link href="/contact">
-                <button className="bg-bhutan-gold text-bhutan-maroon-dark px-6 py-3 rounded-xl font-bold hover:bg-white transition-colors shadow-xl">
+                <button className="bg-bhutan-gold text-bhutan-maroon-dark px-6 py-3 rounded-xl font-bold hover:bg-white dark:bg-slate-900 transition-colors shadow-xl">
                   Contact Support
                 </button>
               </Link>

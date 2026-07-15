@@ -188,7 +188,7 @@ export default function EditCustomerPage() {
                     )}
 
                     {success && (
-                        <Alert className="mb-6 bg-green-50 border-green-200 text-green-800">
+                        <Alert className="mb-6 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900/50 text-green-800 dark:text-green-300">
                             <AlertDescription>Customer updated successfully!</AlertDescription>
                         </Alert>
                     )}

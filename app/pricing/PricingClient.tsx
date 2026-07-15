@@ -98,7 +98,7 @@ export default function PricingClient() {
                 "rounded-2xl md:rounded-[2rem] transition-all duration-300",
                 plan.popular ? 'border-bhutan-maroon shadow-lg shadow-bhutan-maroon/10 md:scale-105 z-10' :
                   plan.bestValue ? 'border-bhutan-gold shadow-lg shadow-bhutan-gold/10 md:scale-105 z-10 bg-slate-900 border-2' :
-                    'border-slate-100 hover:shadow-lg'
+                    'border-slate-100 dark:border-slate-800 hover:shadow-lg'
               )}>
                 {plan.popular && (
                   <div className="bg-bhutan-maroon text-bhutan-gold text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] text-center py-2 rounded-t-2xl md:rounded-t-[2rem]">
@@ -116,11 +116,11 @@ export default function PricingClient() {
                     <p className={cn("text-[10px] md:text-xs font-bold opacity-70 leading-relaxed", plan.bestValue ? "text-slate-300" : "text-muted-foreground")}>{plan.description}</p>
                   </div>
                   <div className="mb-5">
-                    <span className={cn("text-base md:text-lg font-black opacity-60 uppercase tracking-widest", plan.bestValue ? "text-white" : "text-slate-500")}>{plan.period}</span>
+                    <span className={cn("text-base md:text-lg font-black opacity-60 uppercase tracking-widest", plan.bestValue ? "text-white" : "text-slate-500 dark:text-slate-400")}>{plan.period}</span>
                   </div>
                   <ul className="space-y-2 mb-6 flex-1">
                     {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2 text-[10px] md:text-xs font-bold text-slate-600">
+                      <li key={feature} className="flex items-start gap-2 text-[10px] md:text-xs font-bold text-slate-600 dark:text-slate-300">
                         <Check className="h-3.5 w-3.5 text-bhutan-maroon mt-0.5 flex-shrink-0" />
                         {feature}
                       </li>
@@ -131,8 +131,8 @@ export default function PricingClient() {
                       className={cn(
                         "w-full h-10 md:h-11 rounded-xl font-black uppercase tracking-widest text-[9px] md:text-[10px] shadow-md transition-transform hover:scale-[1.02]",
                         plan.popular ? 'bg-bhutan-maroon hover:bg-bhutan-maroon-dark text-white shadow-bhutan-maroon/20' :
-                          plan.bestValue ? 'bg-bhutan-gold hover:bg-white text-bhutan-maroon-dark shadow-bhutan-gold/40' :
-                            'border-slate-200 text-slate-800 hover:bg-slate-50'
+                          plan.bestValue ? 'bg-bhutan-gold hover:bg-white dark:bg-slate-900 text-bhutan-maroon-dark shadow-bhutan-gold/40' :
+                            'border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white hover:bg-slate-50'
                       )}
                       variant={plan.popular || plan.bestValue ? 'default' : 'outline'}
                     >
@@ -146,14 +146,14 @@ export default function PricingClient() {
         </div>
       </section>
 
-      <section className="py-10 md:py-14 bg-slate-50">
+      <section className="py-10 md:py-14 bg-slate-50 dark:bg-slate-900/50">
         <div className="container px-4 md:px-6 max-w-2xl">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-black mb-6 md:mb-8 text-center tracking-tight text-slate-900">Frequently Asked Questions</h2>
+          <h2 className="text-lg sm:text-xl md:text-2xl font-black mb-6 md:mb-8 text-center tracking-tight text-slate-900 dark:text-white">Frequently Asked Questions</h2>
           <Accordion type="single" collapsible className="space-y-2 md:space-y-3">
             {faqs.map((faq, index) => (
-              <AccordionItem key={index} value={`item-${index}`} className="bg-white border border-slate-100 rounded-xl md:rounded-2xl px-4 md:px-6 py-0.5">
-                <AccordionTrigger className="text-left font-black text-xs md:text-sm text-slate-700 hover:text-bhutan-maroon hover:no-underline">{faq.question}</AccordionTrigger>
-                <AccordionContent className="text-slate-500 font-medium leading-relaxed text-[10px] md:text-xs pt-1 pb-4">{faq.answer}</AccordionContent>
+              <AccordionItem key={index} value={`item-${index}`} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl md:rounded-2xl px-4 md:px-6 py-0.5">
+                <AccordionTrigger className="text-left font-black text-xs md:text-sm text-slate-700 dark:text-slate-200 hover:text-bhutan-maroon hover:no-underline">{faq.question}</AccordionTrigger>
+                <AccordionContent className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed text-[10px] md:text-xs pt-1 pb-4">{faq.answer}</AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>

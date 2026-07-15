@@ -120,10 +120,10 @@ export default function AdminMessagesPage() {
     return (
         <div className="space-y-8 pb-8">
             {/* Header Container */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col md:flex-row items-center justify-between gap-6 transition-all duration-300">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 flex flex-col md:flex-row items-center justify-between gap-6 transition-all duration-300">
 
                 <div className="space-y-1 flex-shrink-0 w-full md:w-auto">
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-800 flex items-center gap-3">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-white flex items-center gap-3">
                         <div className="bg-bhutan-maroon/10 p-2 rounded-xl text-bhutan-maroon relative">
                             <MessageSquare className="w-6 h-6" />
                             {unreadCount > 0 && (
@@ -132,19 +132,19 @@ export default function AdminMessagesPage() {
                         </div>
                         Unified Inbox
                     </h1>
-                    <p className="text-sm text-slate-500 font-medium">Manage support tickets and customer inquiries</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Manage support tickets and customer inquiries</p>
                 </div>
 
                 <div className="flex-1 w-full max-w-xl">
                     <div className="relative group">
-                        <div className="relative flex items-center bg-slate-50 rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-bhutan-maroon/20 focus-within:border-bhutan-maroon transition-all duration-300">
+                        <div className="relative flex items-center bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 focus-within:ring-2 focus-within:ring-bhutan-maroon/20 focus-within:border-bhutan-maroon transition-all duration-300">
                             <Search className="absolute left-4 w-5 h-5 text-slate-400 group-focus-within:text-bhutan-maroon transition-colors" />
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search messages by name, email, or subject..."
-                                className="w-full pl-12 pr-4 py-3 bg-transparent border-none outline-none focus:ring-0 text-slate-700 placeholder:text-slate-400 font-medium h-full rounded-xl text-sm"
+                                className="w-full pl-12 pr-4 py-3 bg-transparent border-none outline-none focus:ring-0 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 font-medium h-full rounded-xl text-sm"
                             />
                         </div>
                     </div>
@@ -153,10 +153,10 @@ export default function AdminMessagesPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-250px)] min-h-[600px]">
                 {/* Messages List Sidebar */}
-                <div className="lg:col-span-5 xl:col-span-4 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-                    <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                        <h3 className="font-bold text-slate-700 text-sm tracking-wide uppercase">All Conversations</h3>
-                        <Badge variant="outline" className="bg-white border-slate-200 text-slate-500 px-3 font-semibold">
+                <div className="lg:col-span-5 xl:col-span-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden flex flex-col">
+                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
+                        <h3 className="font-bold text-slate-700 dark:text-slate-200 text-sm tracking-wide uppercase">All Conversations</h3>
+                        <Badge variant="outline" className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 px-3 font-semibold">
                             {messages.length} Total
                         </Badge>
                     </div>
@@ -168,8 +168,8 @@ export default function AdminMessagesPage() {
                                 <p className="text-sm font-medium">Loading inbox...</p>
                             </div>
                         ) : filteredMessages.length === 0 ? (
-                            <div className="p-8 text-center text-slate-500 space-y-3">
-                                <div className="p-4 rounded-full bg-slate-50 inline-block mb-2">
+                            <div className="p-8 text-center text-slate-500 dark:text-slate-400 space-y-3">
+                                <div className="p-4 rounded-full bg-slate-50 dark:bg-slate-900/50 inline-block mb-2">
                                     <Mail className="h-8 w-8 text-slate-300" />
                                 </div>
                                 <p className="font-medium text-sm">No messages found.</p>
@@ -181,27 +181,27 @@ export default function AdminMessagesPage() {
                                         key={msg._id}
                                         onClick={() => handleSelectMessage(msg)}
                                         className={`w-full text-left p-5 transition-all duration-200 border-l-4 ${selectedMessage?._id === msg._id
-                                            ? 'bg-slate-50 border-bhutan-maroon shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)]'
+                                            ? 'bg-slate-50 dark:bg-slate-900/50 border-bhutan-maroon shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)]'
                                             : msg.status === 'Unread'
-                                                ? 'bg-white border-blue-500 hover:bg-slate-50/80'
-                                                : 'bg-white border-transparent hover:bg-slate-50/50'
+                                                ? 'bg-white dark:bg-slate-900 border-blue-500 hover:bg-slate-50/80'
+                                                : 'bg-white dark:bg-slate-900 border-transparent hover:bg-slate-50/50 dark:bg-slate-800/50'
                                             }`}
                                     >
                                         <div className="flex justify-between items-start mb-2 gap-2">
-                                            <h4 className={`font-semibold truncate text-sm ${msg.status === 'Unread' ? 'text-slate-900 font-bold' : 'text-slate-700'}`}>
+                                            <h4 className={`font-semibold truncate text-sm ${msg.status === 'Unread' ? 'text-slate-900 dark:text-white font-bold' : 'text-slate-700'}`}>
                                                 {msg.name}
                                             </h4>
                                             <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap uppercase tracking-wider">
                                                 {new Date(msg.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                             </span>
                                         </div>
-                                        <p className={`text-sm truncate mb-3 ${msg.status === 'Unread' ? 'text-slate-800 font-medium' : 'text-slate-500'}`}>
+                                        <p className={`text-sm truncate mb-3 ${msg.status === 'Unread' ? 'text-slate-800 dark:text-white font-medium' : 'text-slate-500'}`}>
                                             {msg.subject}
                                         </p>
                                         <div className="flex items-center gap-2">
-                                            <Badge className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest ${msg.status === 'Unread' ? 'bg-blue-100 text-blue-700 hover:bg-blue-100' :
-                                                msg.status === 'Replied' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' :
-                                                    'bg-slate-100 text-slate-500 hover:bg-slate-100'
+                                            <Badge className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest ${msg.status === 'Unread' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:bg-blue-900/50 dark:hover:bg-blue-900/50' :
+                                                msg.status === 'Replied' ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:bg-emerald-900/50 dark:hover:bg-emerald-900/50' :
+                                                    'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                                                 }`}>
                                                 {msg.status}
                                             </Badge>
@@ -217,31 +217,31 @@ export default function AdminMessagesPage() {
                 </div>
 
                 {/* Message Details & Reply Panel */}
-                <div className="lg:col-span-7 xl:col-span-8 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col relative">
+                <div className="lg:col-span-7 xl:col-span-8 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden flex flex-col relative">
                     {!selectedMessage ? (
-                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 space-y-4 bg-slate-50/30">
-                            <div className="p-6 rounded-full bg-slate-50 border border-slate-100 shadow-sm">
+                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 space-y-4 bg-slate-50/30 dark:bg-slate-900/30">
+                            <div className="p-6 rounded-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 shadow-sm">
                                 <MessageSquare className="h-10 w-10 text-slate-300" />
                             </div>
-                            <h3 className="text-lg font-bold text-slate-600 tracking-tight">Select a Conversation</h3>
+                            <h3 className="text-lg font-bold text-slate-600 dark:text-slate-300 tracking-tight">Select a Conversation</h3>
                             <p className="text-sm font-medium">Choose a message from the list to view and reply.</p>
                         </div>
                     ) : (
                         <>
                             {/* Message Header */}
-                            <div className="p-6 md:p-8 border-b border-slate-100 bg-white">
+                            <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
-                                        <h2 className="text-xl font-bold text-slate-900 tracking-tight mb-2">{selectedMessage.subject}</h2>
+                                        <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">{selectedMessage.subject}</h2>
                                         <div className="flex items-center gap-2 text-sm">
-                                            <span className="font-semibold text-slate-700">{selectedMessage.name}</span>
+                                            <span className="font-semibold text-slate-700 dark:text-slate-200">{selectedMessage.name}</span>
                                             <span className="text-slate-300">&bull;</span>
                                             <a href={`mailto:${selectedMessage.email}`} className="text-bhutan-maroon hover:underline font-medium">
                                                 {selectedMessage.email}
                                             </a>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 text-slate-400 text-xs font-medium bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                                    <div className="flex items-center gap-2 text-slate-400 text-xs font-medium bg-slate-50 dark:bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800">
                                         <Clock className="w-3.5 h-3.5" />
                                         {new Date(selectedMessage.createdAt).toLocaleString(undefined, {
                                             weekday: 'long',
@@ -256,14 +256,14 @@ export default function AdminMessagesPage() {
                             </div>
 
                             {/* Message Thread */}
-                            <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 bg-slate-50/30">
+                            <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 bg-slate-50/30 dark:bg-slate-900/30">
                                 {/* Original Message */}
                                 <div className="flex gap-4 max-w-4xl">
-                                    <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
-                                        <span className="text-slate-500 font-bold uppercase text-sm">{selectedMessage.name.charAt(0)}</span>
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
+                                        <span className="text-slate-500 dark:text-slate-400 font-bold uppercase text-sm">{selectedMessage.name.charAt(0)}</span>
                                     </div>
-                                    <div className="flex-1 bg-white p-6 rounded-2xl rounded-tl-sm border border-slate-100 shadow-sm">
-                                        <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                                    <div className="flex-1 bg-white dark:bg-slate-900 p-6 rounded-2xl rounded-tl-sm border border-slate-100 dark:border-slate-800 shadow-sm">
+                                        <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
                                             {selectedMessage.message}
                                         </p>
                                     </div>
@@ -290,14 +290,14 @@ export default function AdminMessagesPage() {
 
                             {/* Reply Composer (Only show if not yet replied) */}
                             {selectedMessage.status !== 'Replied' && (
-                                <div className="p-6 bg-white border-t border-slate-200 shadow-[0_-10px_30px_rgba(0,0,0,0.02)]">
+                                <div className="p-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 shadow-[0_-10px_30px_rgba(0,0,0,0.02)]">
                                     {replyError && (
-                                        <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm font-semibold flex items-center gap-2 border border-red-100">
+                                        <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/30 text-red-600 rounded-xl text-sm font-semibold flex items-center gap-2 border border-red-100">
                                             <AlertCircle className="w-4 h-4" />
                                             {replyError}
                                         </div>
                                     )}
-                                    <div className="relative group/reply border border-slate-200 focus-within:border-bhutan-maroon focus-within:ring-4 focus-within:ring-bhutan-maroon/10 rounded-2xl transition-all duration-300">
+                                    <div className="relative group/reply border border-slate-200 dark:border-slate-700 focus-within:border-bhutan-maroon focus-within:ring-4 focus-within:ring-bhutan-maroon/10 rounded-2xl transition-all duration-300">
                                         <Textarea
                                             value={replyText}
                                             onChange={(e) => setReplyText(e.target.value)}

@@ -13,9 +13,12 @@ export function middleware(request: NextRequest) {
   }
 
   // 2. Content Security Policy
+  // In development, React uses eval() for debugging features (callstack reconstruction).
+  // In production, React never uses eval, so we keep CSP stricter.
+  const isDev = process.env.NODE_ENV === 'development'
   const cspHeader = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https://www.transparenttextures.com",
     "font-src 'self' https://fonts.gstatic.com",

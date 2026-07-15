@@ -70,7 +70,7 @@ function VerifyEmailContent() {
             SITE <span className="text-amber-400">JINDA</span>
           </h1>
           <div className="h-0.5 w-12 bg-amber-500/50 mx-auto mb-3 rounded-full" />
-          <p className="text-slate-500 text-[10px] font-bold tracking-[0.3em] uppercase">
+          <p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold tracking-[0.3em] uppercase">
             Email Verification
           </p>
         </div>
@@ -132,7 +132,7 @@ function VerifyEmailContent() {
               </div>
               <h2 className="text-2xl font-black text-white mb-3">Verification Failed</h2>
               <p className="text-red-300 text-sm mb-6">{message}</p>
-              <p className="text-slate-500 text-xs">
+              <p className="text-slate-500 dark:text-slate-400 text-xs">
                 The link may have expired. Open the POS app and request a new verification email.
               </p>
             </div>
@@ -141,7 +141,7 @@ function VerifyEmailContent() {
 
         {/* Footer */}
         <div className="mt-10">
-          <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.4em]">
+          <p className="text-[10px] text-slate-700 dark:text-slate-200 font-black uppercase tracking-[0.4em]">
             Jinda v1.0.0 — Himalayan Tech
           </p>
         </div>

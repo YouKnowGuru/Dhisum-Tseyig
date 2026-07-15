@@ -4,6 +4,9 @@ import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
+import ThemeToggle from '@/components/ThemeToggle'
+import ChatWidget from '@/components/chatbot/ChatWidget'
+import ConsentBanner from '@/components/ConsentBanner'
 import { OrganizationJsonLd, WebSiteJsonLd, SoftwareApplicationJsonLd } from '@/components/seo/JsonLd'
 import { createMetadata } from '@/lib/seo-config'
 
@@ -22,14 +25,26 @@ export const viewport: Viewport = {
   maximumScale: 5,
 }
 
+const themeScript = `
+(function() {
+  try {
+    var stored = localStorage.getItem('theme');
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var theme = stored || (prefersDark ? 'dark' : 'light');
+    if (theme === 'dark') document.documentElement.classList.add('dark');
+  } catch (e) {}
+})();
+`
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" dir="ltr">
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         {/* Preconnect to external origins for faster loading */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -39,17 +54,19 @@ export default function RootLayout({
         <link rel="icon" href="/images/logo.png" type="image/png" />
         <link rel="apple-touch-icon" href="/images/logo.png" />
       </head>
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         {/* Global JSON-LD Structured Data */}
         <OrganizationJsonLd />
         <WebSiteJsonLd />
         <SoftwareApplicationJsonLd />
 
-        <div className="flex min-h-screen flex-col">
+        <div className="flex min-h-screen flex-col" suppressHydrationWarning>
           <Navbar />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1" suppressHydrationWarning>{children}</main>
           <Footer />
           <ScrollToTop />
+          <ChatWidget />
+          <ConsentBanner />
         </div>
       </body>
     </html>

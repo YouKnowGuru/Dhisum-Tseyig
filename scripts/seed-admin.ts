@@ -46,7 +46,11 @@ async function seedAdmin() {
     console.log('Connected to MongoDB')
 
     const username = process.env.ADMIN_USERNAME || 'admin'
-    const password = process.env.ADMIN_PASSWORD || 'admin123'
+    const password = process.env.ADMIN_PASSWORD
+    if (!password) {
+      console.error('ADMIN_PASSWORD environment variable is required')
+      process.exit(1)
+    }
 
     const existingAdmin = await Admin.findOne({ username })
     const passwordHash = await bcrypt.hash(password, 12)
@@ -66,7 +70,7 @@ async function seedAdmin() {
     }
 
     console.log(`Username: ${username}`)
-    console.log(`Password: ${password}`)
+    console.log('Password set successfully (not shown for security)')
     console.log('Please change the password after login if using defaults.')
 
     process.exit(0)

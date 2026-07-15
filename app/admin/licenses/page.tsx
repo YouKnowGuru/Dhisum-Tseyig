@@ -204,14 +204,14 @@ export default function LicensesPage() {
   return (
     <div className="space-y-10 stagger-in">
       {/* Header */}
-      <div className="flex items-center justify-between bg-white p-8 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
+      <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-bhutan-maroon/5 blur-3xl -mr-32 -mt-32" />
         <div className="relative z-10 flex items-center gap-6">
           <div className="h-14 w-14 rounded-2xl bg-bhutan-maroon flex items-center justify-center shadow-lg shadow-bhutan-maroon/20">
             <Key className="h-7 w-7 text-bhutan-gold" />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Ecosystem Licenses</h1>
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Ecosystem Licenses</h1>
             <p className="text-sm font-bold text-slate-400">
               Manage and monitor all active platform instances
             </p>
@@ -226,7 +226,7 @@ export default function LicensesPage() {
       </div>
 
       {/* Filters */}
-      <Card className="border-slate-100 shadow-sm rounded-2xl overflow-hidden">
+      <Card className="border-slate-100 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden">
         <CardContent className="p-6">
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex-1 min-w-[300px]">
@@ -236,16 +236,16 @@ export default function LicensesPage() {
                   placeholder="Query by key, customer, or company..."
                   value={search}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-                  className="pl-12 h-12 bg-slate-50 border-slate-100 focus:bg-white focus:ring-bhutan-maroon/20 rounded-xl font-bold placeholder:text-slate-400"
+                  className="pl-12 h-12 bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800 focus:bg-white dark:bg-slate-900 focus:ring-bhutan-maroon/20 rounded-xl font-bold placeholder:text-slate-400"
                 />
               </div>
             </div>
             <div className="flex gap-3">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[160px] h-12 rounded-xl font-bold border-slate-100 bg-white">
+                <SelectTrigger className="w-[160px] h-12 rounded-xl font-bold border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-slate-100">
+                <SelectContent className="rounded-xl border-slate-100 dark:border-slate-800">
                   <SelectItem value="all" className="font-bold">All Status</SelectItem>
                   <SelectItem value="active" className="text-green-600 font-bold">Active</SelectItem>
                   <SelectItem value="inactive" className="text-slate-400 font-bold">Inactive</SelectItem>
@@ -254,10 +254,10 @@ export default function LicensesPage() {
                 </SelectContent>
               </Select>
               <Select value={planFilter} onValueChange={setPlanFilter}>
-                <SelectTrigger className="w-[160px] h-12 rounded-xl font-bold border-slate-100 bg-white">
+                <SelectTrigger className="w-[160px] h-12 rounded-xl font-bold border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                   <SelectValue placeholder="All Plans" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-slate-100">
+                <SelectContent className="rounded-xl border-slate-100 dark:border-slate-800">
                   <SelectItem value="all" className="font-bold">All Plans</SelectItem>
                   <SelectItem value="starter" className="font-bold">Starter Kit</SelectItem>
                   <SelectItem value="growth" className="font-bold">Growth Stage</SelectItem>
@@ -272,11 +272,11 @@ export default function LicensesPage() {
       </Card>
 
       {/* Licenses Table */}
-      <Card className="border-slate-100 shadow-sm rounded-3xl overflow-hidden mb-12">
+      <Card className="border-slate-100 dark:border-slate-800 shadow-sm rounded-3xl overflow-hidden mb-12">
         <CardContent className="p-0">
           <Table>
-            <TableHeader className="bg-slate-50/50">
-              <TableRow className="border-slate-100 hover:bg-transparent">
+            <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50">
+              <TableRow className="border-slate-100 dark:border-slate-800 hover:bg-transparent">
                 <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-400 py-6 pl-8">Instance ID</TableHead>
                 <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-400 py-6">Stakeholder</TableHead>
                 <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-400 py-6">Service Tier</TableHead>
@@ -307,14 +307,14 @@ export default function LicensesPage() {
                 </TableRow>
               ) : (
                 licenses.map((license: License) => (
-                  <TableRow key={license._id} className="border-slate-50 hover:bg-slate-50/50 transition-colors group">
+                  <TableRow key={license._id} className="border-slate-50 hover:bg-slate-50/50 dark:bg-slate-800/50 transition-colors group">
                     <TableCell className="pl-8 py-6">
                       <div className="flex items-center gap-4">
                         <div className="h-10 w-10 rounded-xl bg-bhutan-maroon/5 flex items-center justify-center text-bhutan-maroon group-hover:scale-110 transition-transform duration-500">
                           <Key className="h-4 w-4" />
                         </div>
                         <div className="flex flex-col">
-                          <code className="text-sm font-black text-slate-800 tracking-tight">{license.licenseKey}</code>
+                          <code className="text-sm font-black text-slate-800 dark:text-white tracking-tight">{license.licenseKey}</code>
                           <button
                             onClick={() => copyLicenseKey(license.licenseKey, license._id)}
                             className="text-[10px] font-bold text-slate-400 hover:text-bhutan-maroon flex items-center gap-1 mt-0.5 transition-colors"
@@ -330,7 +330,7 @@ export default function LicensesPage() {
                     </TableCell>
                     <TableCell className="py-6">
                       <div className="flex flex-col">
-                        <p className="font-black text-slate-800 tracking-tight">{license.customerName}</p>
+                        <p className="font-black text-slate-800 dark:text-white tracking-tight">{license.customerName}</p>
                         <p className="text-xs font-bold text-slate-400">{license.companyName || license.email}</p>
                       </div>
                     </TableCell>
@@ -340,21 +340,21 @@ export default function LicensesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="py-6">
-                      <span className="text-sm font-black text-slate-600">
+                      <span className="text-sm font-black text-slate-600 dark:text-slate-300">
                         {license.maxUsers || 1}
                       </span>
                     </TableCell>
                     <TableCell className="py-6">
                       <Badge className={cn(
                         "font-black uppercase tracking-widest text-[9px] px-3 py-1 rounded-full border-none",
-                        license.status === 'active' ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"
+                        license.status === 'active' ? "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                       )}>
                         {license.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="py-6">
                       {license.expiryDate ? (
-                        <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
                           <Calendar className="h-3.5 w-3.5 text-slate-300" />
                           <span>{new Date(license.expiryDate).toLocaleDateString()}</span>
                         </div>
@@ -365,14 +365,14 @@ export default function LicensesPage() {
                     <TableCell className="py-6 pr-8 text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-slate-100 transition-colors">
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-slate-100 dark:bg-slate-800 transition-colors">
                             <MoreHorizontal className="h-4 w-4 text-slate-400" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 border-slate-100 shadow-2xl">
+                        <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 border-slate-100 dark:border-slate-800 shadow-2xl">
                           <DropdownMenuItem
                             onClick={() => toggleStatus(license._id, license.status)}
-                            className="rounded-xl font-bold text-slate-600 focus:bg-slate-50 focus:text-bhutan-maroon py-3"
+                            className="rounded-xl font-bold text-slate-600 dark:text-slate-300 focus:bg-slate-50 dark:bg-slate-900/50 focus:text-bhutan-maroon py-3"
                           >
                             <Power className="mr-3 h-4 w-4" />
                             {license.status === 'active' ? 'Force Deactivate' : 'Reactivate Key'}
@@ -382,24 +382,24 @@ export default function LicensesPage() {
                               setSelectedLicenseId(license._id)
                               setIsExtendDialogOpen(true)
                             }}
-                            className="rounded-xl font-bold text-slate-600 focus:bg-slate-50 focus:text-bhutan-maroon py-3"
+                            className="rounded-xl font-bold text-slate-600 dark:text-slate-300 focus:bg-slate-50 dark:bg-slate-900/50 focus:text-bhutan-maroon py-3"
                           >
                             <Clock className="mr-3 h-4 w-4" />
                             Extend Validity
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => router.push(`/admin/licenses/${license._id}`)}
-                            className="rounded-xl font-bold text-slate-600 focus:bg-slate-50 focus:text-bhutan-maroon py-3"
+                            className="rounded-xl font-bold text-slate-600 dark:text-slate-300 focus:bg-slate-50 dark:bg-slate-900/50 focus:text-bhutan-maroon py-3"
                           >
                             <Edit className="mr-3 h-4 w-4" />
                             Update Metadata
                           </DropdownMenuItem>
-                          <div className="h-px bg-slate-100 my-1 mx-1" />
+                          <div className="h-px bg-slate-100 dark:bg-slate-800 my-1 mx-1" />
                           <Dialog>
                             <DialogTrigger asChild>
                               <DropdownMenuItem
                                 onSelect={(e: Event) => e.preventDefault()}
-                                className="rounded-xl font-bold text-red-500 focus:bg-red-50 focus:text-red-600 py-3"
+                                className="rounded-xl font-bold text-red-500 focus:bg-red-50 dark:focus:bg-red-950/30 dark:bg-red-950/30 focus:text-red-600 py-3"
                               >
                                 <Trash2 className="mr-3 h-4 w-4" />
                                 Terminate Instance
@@ -407,8 +407,8 @@ export default function LicensesPage() {
                             </DialogTrigger>
                             <DialogContent className="rounded-3xl border-none shadow-2xl">
                               <DialogHeader>
-                                <DialogTitle className="text-2xl font-black text-slate-900">Confirm Termination</DialogTitle>
-                                <DialogDescription className="text-sm font-bold text-slate-500 py-4">
+                                <DialogTitle className="text-2xl font-black text-slate-900 dark:text-white">Confirm Termination</DialogTitle>
+                                <DialogDescription className="text-sm font-bold text-slate-500 dark:text-slate-400 py-4">
                                   Are you absolutely sure you want to terminate this instance? This will immediately revoke access and delete all activation data.
                                 </DialogDescription>
                               </DialogHeader>

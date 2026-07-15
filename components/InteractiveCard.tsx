@@ -52,7 +52,7 @@ export const InteractiveCard = ({
                     transition: isHovered ? 'none' : 'transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)',
                 }}
                 className={cn(
-                    "transform-style-3d relative rounded-2xl md:rounded-[2rem] bg-white border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden h-full",
+                    "transform-style-3d relative rounded-2xl md:rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden h-full",
                     className
                 )}
             >

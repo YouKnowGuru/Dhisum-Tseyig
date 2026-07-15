@@ -83,14 +83,14 @@ export default function AdminSettingsPage() {
   return (
     <div className="space-y-10 stagger-in">
       {/* Header */}
-      <div className="flex items-center justify-between bg-white p-8 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
+      <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-bhutan-gold/5 blur-3xl -mr-32 -mt-32" />
         <div className="relative z-10 flex items-center gap-6">
           <div className="h-14 w-14 rounded-2xl bg-bhutan-maroon flex items-center justify-center shadow-lg shadow-bhutan-maroon/20">
             <Database className="h-7 w-7 text-bhutan-gold" />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">System Configuration</h1>
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">System Configuration</h1>
             <p className="text-sm font-bold text-slate-400">
               Fine-tune your platform environment and security
             </p>
@@ -101,7 +101,7 @@ export default function AdminSettingsPage() {
       {message && (
         <Alert className={cn(
           "rounded-2xl border-none shadow-lg animate-float",
-          message.type === 'error' ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"
+          message.type === 'error' ? "bg-red-50 dark:bg-red-950/30 text-red-600" : "bg-green-50 dark:bg-green-950/30 text-green-600"
         )}>
           <AlertDescription className="font-bold flex items-center gap-2">
             {message.type === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
@@ -111,29 +111,29 @@ export default function AdminSettingsPage() {
       )}
 
       <Tabs defaultValue="profile" className="space-y-8">
-        <TabsList className="bg-slate-100/50 p-1.5 rounded-2xl h-14 border border-slate-100">
-          <TabsTrigger value="profile" className="rounded-xl px-8 font-black text-[11px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-bhutan-maroon data-[state=active]:shadow-sm transition-all">
+        <TabsList className="bg-slate-100/50 p-1.5 rounded-2xl h-14 border border-slate-100 dark:border-slate-800">
+          <TabsTrigger value="profile" className="rounded-xl px-8 font-black text-[11px] uppercase tracking-widest data-[state=active]:bg-white dark:bg-slate-900 data-[state=active]:text-bhutan-maroon data-[state=active]:shadow-sm transition-all">
             <User className="h-3.5 w-3.5 mr-2" />
             Identity
           </TabsTrigger>
-          <TabsTrigger value="security" className="rounded-xl px-8 font-black text-[11px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-bhutan-maroon data-[state=active]:shadow-sm transition-all">
+          <TabsTrigger value="security" className="rounded-xl px-8 font-black text-[11px] uppercase tracking-widest data-[state=active]:bg-white dark:bg-slate-900 data-[state=active]:text-bhutan-maroon data-[state=active]:shadow-sm transition-all">
             <Lock className="h-3.5 w-3.5 mr-2" />
             Shield
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="rounded-xl px-8 font-black text-[11px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-bhutan-maroon data-[state=active]:shadow-sm transition-all">
+          <TabsTrigger value="notifications" className="rounded-xl px-8 font-black text-[11px] uppercase tracking-widest data-[state=active]:bg-white dark:bg-slate-900 data-[state=active]:text-bhutan-maroon data-[state=active]:shadow-sm transition-all">
             <Bell className="h-3.5 w-3.5 mr-2" />
             Pulses
           </TabsTrigger>
-          <TabsTrigger value="system" className="rounded-xl px-8 font-black text-[11px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:text-bhutan-maroon data-[state=active]:shadow-sm transition-all">
+          <TabsTrigger value="system" className="rounded-xl px-8 font-black text-[11px] uppercase tracking-widest data-[state=active]:bg-white dark:bg-slate-900 data-[state=active]:text-bhutan-maroon data-[state=active]:shadow-sm transition-all">
             <Database className="h-3.5 w-3.5 mr-2" />
             Core
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-0">
-          <Card className="border-slate-100 shadow-sm rounded-3xl overflow-hidden">
-            <CardHeader className="bg-slate-50/50 p-8 border-b border-slate-100">
-              <CardTitle className="text-xl font-black text-slate-800 tracking-tight">Identity Profile</CardTitle>
+          <Card className="border-slate-100 dark:border-slate-800 shadow-sm rounded-3xl overflow-hidden">
+            <CardHeader className="bg-slate-50/50 dark:bg-slate-800/50 p-8 border-b border-slate-100 dark:border-slate-800">
+              <CardTitle className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Identity Profile</CardTitle>
               <CardDescription className="font-bold text-slate-400">
                 Primary administrative contact credentials
               </CardDescription>
@@ -146,7 +146,7 @@ export default function AdminSettingsPage() {
                     id="username"
                     value={profileData.username}
                     onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-                    className="h-12 bg-slate-50 border-slate-100 focus:bg-white rounded-xl font-bold"
+                    className="h-12 bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800 focus:bg-white dark:bg-slate-900 rounded-xl font-bold"
                   />
                 </div>
                 <div className="space-y-3">
@@ -156,7 +156,7 @@ export default function AdminSettingsPage() {
                     type="email"
                     value={profileData.email}
                     onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                    className="h-12 bg-slate-50 border-slate-100 focus:bg-white rounded-xl font-bold"
+                    className="h-12 bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800 focus:bg-white dark:bg-slate-900 rounded-xl font-bold"
                   />
                 </div>
               </div>
@@ -178,9 +178,9 @@ export default function AdminSettingsPage() {
         </TabsContent>
 
         <TabsContent value="security" className="mt-0">
-          <Card className="border-slate-100 shadow-sm rounded-3xl overflow-hidden">
-            <CardHeader className="bg-slate-50/50 p-8 border-b border-slate-100">
-              <CardTitle className="text-xl font-black text-slate-800 tracking-tight">Encrypted Shield</CardTitle>
+          <Card className="border-slate-100 dark:border-slate-800 shadow-sm rounded-3xl overflow-hidden">
+            <CardHeader className="bg-slate-50/50 dark:bg-slate-800/50 p-8 border-b border-slate-100 dark:border-slate-800">
+              <CardTitle className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Encrypted Shield</CardTitle>
               <CardDescription className="font-bold text-slate-400">
                 Revoke current session by rotating your access key
               </CardDescription>
@@ -193,7 +193,7 @@ export default function AdminSettingsPage() {
                   type="password"
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  className="h-12 bg-slate-50 border-slate-100 focus:bg-white rounded-xl font-bold"
+                  className="h-12 bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800 focus:bg-white dark:bg-slate-900 rounded-xl font-bold"
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -204,7 +204,7 @@ export default function AdminSettingsPage() {
                     type="password"
                     value={passwordData.newPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                    className="h-12 bg-slate-50 border-slate-100 focus:bg-white rounded-xl font-bold"
+                    className="h-12 bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800 focus:bg-white dark:bg-slate-900 rounded-xl font-bold"
                   />
                 </div>
                 <div className="space-y-3">
@@ -214,7 +214,7 @@ export default function AdminSettingsPage() {
                     type="password"
                     value={passwordData.confirmPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                    className="h-12 bg-slate-50 border-slate-100 focus:bg-white rounded-xl font-bold"
+                    className="h-12 bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800 focus:bg-white dark:bg-slate-900 rounded-xl font-bold"
                   />
                 </div>
               </div>
@@ -236,9 +236,9 @@ export default function AdminSettingsPage() {
         </TabsContent>
 
         <TabsContent value="notifications" className="mt-0">
-          <Card className="border-slate-100 shadow-sm rounded-3xl overflow-hidden">
-            <CardHeader className="bg-slate-50/50 p-8 border-b border-slate-100">
-              <CardTitle className="text-xl font-black text-slate-800 tracking-tight">System Pulses</CardTitle>
+          <Card className="border-slate-100 dark:border-slate-800 shadow-sm rounded-3xl overflow-hidden">
+            <CardHeader className="bg-slate-50/50 dark:bg-slate-800/50 p-8 border-b border-slate-100 dark:border-slate-800">
+              <CardTitle className="text-xl font-black text-slate-800 dark:text-white tracking-tight">System Pulses</CardTitle>
               <CardDescription className="font-bold text-slate-400">
                 Event-driven notification hooks
               </CardDescription>
@@ -254,31 +254,31 @@ export default function AdminSettingsPage() {
         </TabsContent>
 
         <TabsContent value="system" className="mt-0">
-          <Card className="border-slate-100 shadow-sm rounded-3xl overflow-hidden">
-            <CardHeader className="bg-slate-50/50 p-8 border-b border-slate-100">
-              <CardTitle className="text-xl font-black text-slate-800 tracking-tight">Core Telemetry</CardTitle>
+          <Card className="border-slate-100 dark:border-slate-800 shadow-sm rounded-3xl overflow-hidden">
+            <CardHeader className="bg-slate-50/50 dark:bg-slate-800/50 p-8 border-b border-slate-100 dark:border-slate-800">
+              <CardTitle className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Core Telemetry</CardTitle>
               <CardDescription className="font-bold text-slate-400">
                 Platform infrastructure and operational metadata
               </CardDescription>
             </CardHeader>
             <CardContent className="p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100">
+                <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Build Version</p>
-                  <p className="text-2xl font-black text-slate-900 tracking-tight">1.2.4-PRO</p>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">1.2.4-PRO</p>
                 </div>
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100">
+                <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Environment</p>
                   <Badge className="bg-bhutan-gold text-bhutan-maroon border-none font-black text-[9px] px-3 py-1 rounded-full">PRODUCTION</Badge>
                 </div>
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100">
+                <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Data Engine</p>
-                  <p className="text-sm font-black text-slate-700 tracking-tight">MongoDB Atlas Cluster</p>
+                  <p className="text-sm font-black text-slate-700 dark:text-slate-200 tracking-tight">MongoDB Atlas Cluster</p>
                   <div className="h-1 w-12 bg-green-500 rounded-full mt-2" />
                 </div>
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100">
+                <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Last Sync</p>
-                  <p className="text-sm font-black text-slate-700 tracking-tight">{new Date().toLocaleDateString()}</p>
+                  <p className="text-sm font-black text-slate-700 dark:text-slate-200 tracking-tight">{new Date().toLocaleDateString()}</p>
                 </div>
               </div>
             </CardContent>

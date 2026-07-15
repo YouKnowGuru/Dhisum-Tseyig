@@ -123,7 +123,7 @@ function ResetPasswordContent() {
             SITE <span className="text-amber-400">JINDA</span>
           </h1>
           <div className="h-0.5 w-12 bg-amber-500/50 mx-auto mb-3 rounded-full" />
-          <p className="text-slate-500 text-[10px] font-bold tracking-[0.3em] uppercase">
+          <p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold tracking-[0.3em] uppercase">
             Password Reset
           </p>
         </div>
@@ -148,7 +148,7 @@ function ResetPasswordContent() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">
+              <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1">
                 New Password
               </label>
               <input
@@ -161,12 +161,12 @@ function ResetPasswordContent() {
                 onFocus={() => password.length > 0 && setShowPasswordReqs(true)}
                 placeholder="••••••••"
                 required
-                className="w-full h-14 px-5 bg-slate-900/50 border border-white/10 rounded-2xl text-white font-medium placeholder:text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500/50 transition-all"
+                className="w-full h-14 px-5 bg-slate-900/50 border border-white/10 rounded-2xl text-white font-medium placeholder:text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500/50 transition-all"
               />
               {/* Password Requirements */}
               {showPasswordReqs && (
                 <div className="bg-slate-900/30 border border-white/5 rounded-xl p-3 space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Password Requirements</p>
+                  <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Password Requirements</p>
                   {passwordReqs.map((req, idx) => {
                     const isMet = req.test(password)
                     return (
@@ -191,7 +191,7 @@ function ResetPasswordContent() {
             </div>
 
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">
+                  <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] ml-1">
                     Confirm Password
                   </label>
                   <input
@@ -201,7 +201,7 @@ function ResetPasswordContent() {
                     placeholder="••••••••"
                     required
                     minLength={6}
-                    className="w-full h-14 px-5 bg-slate-900/50 border border-white/10 rounded-2xl text-white font-medium placeholder:text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500/50 transition-all"
+                    className="w-full h-14 px-5 bg-slate-900/50 border border-white/10 rounded-2xl text-white font-medium placeholder:text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500/50 transition-all"
                   />
                 </div>
 
@@ -217,7 +217,7 @@ function ResetPasswordContent() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full h-16 bg-gradient-to-r from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-900 font-black text-xs uppercase tracking-[0.2em] rounded-2xl transition-all disabled:opacity-50 flex items-center justify-center gap-3 shadow-xl"
+                  className="w-full h-16 bg-gradient-to-r from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-900 dark:text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl transition-all disabled:opacity-50 flex items-center justify-center gap-3 shadow-xl"
                 >
                   {isSubmitting ? (
                     <>
@@ -259,7 +259,7 @@ function ResetPasswordContent() {
               </div>
               <h2 className="text-2xl font-black text-white mb-3">Link Expired</h2>
               <p className="text-red-300 text-sm mb-6">{message}</p>
-              <p className="text-slate-500 text-xs">
+              <p className="text-slate-500 dark:text-slate-400 text-xs">
                 Go to the POS app and request a new password reset.
               </p>
             </div>
@@ -268,7 +268,7 @@ function ResetPasswordContent() {
 
         {/* Footer */}
         <div className="mt-10">
-          <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.4em]">
+          <p className="text-[10px] text-slate-700 dark:text-slate-200 font-black uppercase tracking-[0.4em]">
             Jinda v1.0.0 — Himalayan Tech
           </p>
         </div>

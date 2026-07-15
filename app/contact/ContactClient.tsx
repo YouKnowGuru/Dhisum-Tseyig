@@ -79,7 +79,7 @@ export default function ContactClient() {
       </section>
 
       {/* Main Content */}
-      <section className="py-16 md:py-24 bg-slate-50 relative overflow-hidden flex-1">
+      <section className="py-16 md:py-24 bg-slate-50 dark:bg-slate-900/50 relative overflow-hidden flex-1">
         <div className="container relative z-10 px-4 md:px-6">
           <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 max-w-7xl mx-auto">
 
@@ -93,8 +93,8 @@ export default function ContactClient() {
                       <MapPin className="h-6 w-6 text-bhutan-maroon" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-slate-800 tracking-tight mb-2 group-hover:text-bhutan-maroon transition-colors">Visit Us</h3>
-                      <p className="text-sm font-medium text-slate-500 leading-relaxed">
+                      <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tight mb-2 group-hover:text-bhutan-maroon transition-colors">Visit Us</h3>
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
                         Damphu, Tsirang, Bhutan
                       </p>
                     </div>
@@ -110,8 +110,8 @@ export default function ContactClient() {
                       <Phone className="h-6 w-6 text-bhutan-maroon" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-slate-800 tracking-tight mb-2 group-hover:text-bhutan-maroon transition-colors">Call Us</h3>
-                      <p className="text-sm font-medium text-slate-500 leading-relaxed">
+                      <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tight mb-2 group-hover:text-bhutan-maroon transition-colors">Call Us</h3>
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
                         +975 17699032<br />Mon - Fri, 9am - 5pm GST
                       </p>
                     </div>
@@ -127,8 +127,8 @@ export default function ContactClient() {
                       <Mail className="h-6 w-6 text-bhutan-maroon" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-slate-800 tracking-tight mb-2 group-hover:text-bhutan-maroon transition-colors">Email Us</h3>
-                      <p className="text-sm font-medium text-slate-500 leading-relaxed break-all">
+                      <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tight mb-2 group-hover:text-bhutan-maroon transition-colors">Email Us</h3>
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed break-all">
                         dhisumtseyig@gmail.com
                       </p>
                     </div>
@@ -144,8 +144,8 @@ export default function ContactClient() {
                       <Clock className="h-6 w-6 text-bhutan-gold" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-slate-800 tracking-tight mb-2 group-hover:text-bhutan-maroon transition-colors">Response Time</h3>
-                      <p className="text-sm font-medium text-slate-500 leading-relaxed">
+                      <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tight mb-2 group-hover:text-bhutan-maroon transition-colors">Response Time</h3>
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
                         We typically respond within<br />24 hours on business days
                       </p>
                     </div>
@@ -156,30 +156,30 @@ export default function ContactClient() {
 
             {/* Contact Form Section */}
             <div className="lg:col-span-8 stagger-in">
-              <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-[2rem] overflow-hidden bg-white/70 backdrop-blur-xl group">
+              <Card className="border-none shadow-2xl shadow-slate-200/50 dark:shadow-black/50 rounded-[2rem] overflow-hidden bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl group">
                 <div className="h-2 w-full bg-gradient-to-r from-bhutan-maroon via-bhutan-orange to-bhutan-gold" />
 
                 <CardContent className="p-6 sm:p-10 lg:p-12 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50/50 rounded-full blur-3xl mix-blend-multiply opacity-50" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50/50 dark:bg-slate-800/50 rounded-full blur-3xl mix-blend-multiply opacity-50" />
 
                   {isSuccess ? (
                     <div className="text-center py-16 px-4 animate-in fade-in zoom-in duration-500 flex flex-col items-center justify-center relative z-10">
                       <div className="relative mb-6">
                         <div className="absolute inset-0 bg-bhutan-gold/20 rounded-full blur-xl animate-pulse" />
                         <div className="relative h-24 w-24 rounded-[2rem] bg-gradient-to-tr from-bhutan-maroon to-bhutan-gold flex items-center justify-center p-[2px] shadow-xl">
-                          <div className="h-full w-full bg-white rounded-[1.8rem] flex items-center justify-center">
+                          <div className="h-full w-full bg-white dark:bg-slate-900 rounded-[1.8rem] flex items-center justify-center">
                             <CheckCircle className="h-12 w-12 text-bhutan-maroon" />
                           </div>
                         </div>
                       </div>
-                      <h3 className="text-3xl font-black text-slate-900 tracking-tight mb-3">Message Sent!</h3>
-                      <p className="text-slate-500 font-medium text-lg max-w-sm mx-auto">
+                      <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Message Sent!</h3>
+                      <p className="text-slate-500 dark:text-slate-400 font-medium text-lg max-w-sm mx-auto">
                         Thank you for reaching out. We'll get back to you as soon as possible.
                       </p>
                       <Button
                         onClick={() => setIsSuccess(false)}
                         variant="outline"
-                        className="mt-8 border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-bhutan-maroon transition-colors font-bold rounded-xl px-8"
+                        className="mt-8 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-900/50 hover:text-bhutan-maroon transition-colors font-bold rounded-xl px-8"
                       >
                         Send another message
                       </Button>
@@ -187,60 +187,60 @@ export default function ContactClient() {
                   ) : (
                     <form onSubmit={handleSubmit} className="relative z-10 space-y-6 md:space-y-8">
                       <div>
-                        <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight mb-2">Send us a Message</h2>
-                        <p className="text-slate-500 font-medium">Fill out the form below and we'll be in touch quickly.</p>
+                        <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Send us a Message</h2>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium">Fill out the form below and we'll be in touch quickly.</p>
                       </div>
 
                       {error && (
-                        <Alert variant="destructive" className="bg-red-50 text-red-600 border border-red-200 rounded-xl font-bold">
+                        <Alert variant="destructive" className="bg-red-50 dark:bg-red-950/30 text-red-600 border border-red-200 dark:border-red-900/50 rounded-xl font-bold">
                           <AlertDescription>{error}</AlertDescription>
                         </Alert>
                       )}
 
                       <div className="grid md:grid-cols-2 gap-6 md:gap-8">
                         <div className="space-y-2 group/input">
-                          <Label htmlFor="name" className="text-sm font-bold text-slate-500 uppercase tracking-widest group-focus-within/input:text-bhutan-maroon transition-colors">Your Name</Label>
+                          <Label htmlFor="name" className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest group-focus-within/input:text-bhutan-maroon transition-colors">Your Name</Label>
                           <Input
                             id="name"
                             name="name"
                             placeholder="Tshering Dorji"
                             required
-                            className="bg-slate-50/50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-bhutan-maroon/20 focus-visible:border-bhutan-maroon rounded-xl h-12 px-4 transition-all font-medium shadow-sm"
+                            className="bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-bhutan-maroon/20 focus-visible:border-bhutan-maroon rounded-xl h-12 px-4 transition-all font-medium shadow-sm"
                           />
                         </div>
                         <div className="space-y-2 group/input">
-                          <Label htmlFor="email" className="text-sm font-bold text-slate-500 uppercase tracking-widest group-focus-within/input:text-bhutan-maroon transition-colors">Email Address</Label>
+                          <Label htmlFor="email" className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest group-focus-within/input:text-bhutan-maroon transition-colors">Email Address</Label>
                           <Input
                             id="email"
                             name="email"
                             type="email"
                             placeholder="tshering@example.com"
                             required
-                            className="bg-slate-50/50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-bhutan-maroon/20 focus-visible:border-bhutan-maroon rounded-xl h-12 px-4 transition-all font-medium shadow-sm"
+                            className="bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-bhutan-maroon/20 focus-visible:border-bhutan-maroon rounded-xl h-12 px-4 transition-all font-medium shadow-sm"
                           />
                         </div>
                       </div>
 
                       <div className="space-y-2 group/input">
-                        <Label htmlFor="subject" className="text-sm font-bold text-slate-500 uppercase tracking-widest group-focus-within/input:text-bhutan-maroon transition-colors">Subject</Label>
+                        <Label htmlFor="subject" className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest group-focus-within/input:text-bhutan-maroon transition-colors">Subject</Label>
                         <Input
                           id="subject"
                           name="subject"
                           placeholder="e.g., License activation, GST setup help, pricing inquiry"
                           required
-                          className="bg-slate-50/50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-bhutan-maroon/20 focus-visible:border-bhutan-maroon rounded-xl h-12 px-4 transition-all font-medium shadow-sm"
+                          className="bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-bhutan-maroon/20 focus-visible:border-bhutan-maroon rounded-xl h-12 px-4 transition-all font-medium shadow-sm"
                         />
                       </div>
 
                       <div className="space-y-2 group/input">
-                        <Label htmlFor="message" className="text-sm font-bold text-slate-500 uppercase tracking-widest group-focus-within/input:text-bhutan-maroon transition-colors">Message</Label>
+                        <Label htmlFor="message" className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest group-focus-within/input:text-bhutan-maroon transition-colors">Message</Label>
                         <Textarea
                           id="message"
                           name="message"
                           placeholder="Tell us more about your inquiry..."
                           rows={6}
                           required
-                          className="bg-slate-50/50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-bhutan-maroon/20 focus-visible:border-bhutan-maroon rounded-xl px-4 py-3 transition-all font-medium shadow-sm resize-none"
+                          className="bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-bhutan-maroon/20 focus-visible:border-bhutan-maroon rounded-xl px-4 py-3 transition-all font-medium shadow-sm resize-none"
                         />
                       </div>
 

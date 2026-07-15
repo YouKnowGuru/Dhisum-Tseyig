@@ -190,7 +190,7 @@ export default function FeaturesClient() {
       </section>
 
       {/* Additional Features */}
-      <section className="py-10 md:py-14 bg-slate-50">
+      <section className="py-10 md:py-14 bg-slate-50 dark:bg-slate-900/50">
         <div className="container px-4 md:px-6">
           <div className="text-center max-w-xl mx-auto mb-8 md:mb-10">
             <h2 className="text-lg sm:text-xl md:text-2xl font-black mb-3 tracking-tight">Powerful Add-Ons</h2>
@@ -213,23 +213,23 @@ export default function FeaturesClient() {
       </section>
 
       {/* Payment Methods Marquee */}
-      <section className="py-16 md:py-24 border-y bg-white overflow-hidden relative">
+      <section className="py-16 md:py-24 border-y bg-white dark:bg-slate-900 overflow-hidden relative">
         <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-white via-transparent to-transparent z-10 pointer-events-none w-20 md:w-40" />
         <div className="absolute inset-y-0 right-0 bg-gradient-to-l from-white via-transparent to-transparent z-10 pointer-events-none w-20 md:w-40" />
 
         <div className="container px-4 md:px-6 mb-12 text-center relative z-20">
           <Badge className="bg-bhutan-maroon/10 text-bhutan-maroon border-none px-4 py-2 rounded-full font-black tracking-[0.2em] uppercase text-[10px] mb-4">Payments</Badge>
-          <h2 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">All Bhutanese Payment Methods</h2>
-          <p className="text-xs md:text-base text-slate-500 font-bold mt-2">Record payments from any bank or mobile app.</p>
+          <h2 className="text-xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">All Bhutanese Payment Methods</h2>
+          <p className="text-xs md:text-base text-slate-500 dark:text-slate-400 font-bold mt-2">Record payments from any bank or mobile app.</p>
         </div>
 
         <div className="relative flex overflow-x-hidden">
           <div className="animate-marquee whitespace-nowrap flex items-center gap-4 md:gap-8 min-w-full py-4">
             {[...paymentMethods, ...paymentMethods, ...paymentMethods].map((method, idx) => (
               <div key={`${method}-${idx}`} className="group relative">
-                <div className="glow-card lighting-glow bg-slate-50 px-6 md:px-10 py-4 md:py-7 rounded-2xl md:rounded-[2rem] border border-slate-100 flex items-center gap-3 md:gap-5 transition-all duration-300 shadow-sm">
+                <div className="glow-card lighting-glow bg-slate-50 dark:bg-slate-900/50 px-6 md:px-10 py-4 md:py-7 rounded-2xl md:rounded-[2rem] border border-slate-100 dark:border-slate-800 flex items-center gap-3 md:gap-5 transition-all duration-300 shadow-sm">
                   <div className="h-2.5 w-2.5 rounded-full bg-bhutan-gold animate-pulse shadow-[0_0_10px_rgba(255,215,0,0.8)]" />
-                  <span className="text-sm md:text-2xl font-black text-slate-800 tracking-tighter uppercase group-hover:text-bhutan-maroon transition-colors">
+                  <span className="text-sm md:text-2xl font-black text-slate-800 dark:text-white tracking-tighter uppercase group-hover:text-bhutan-maroon transition-colors">
                     {method}
                   </span>
                 </div>

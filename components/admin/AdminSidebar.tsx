@@ -30,16 +30,16 @@ export default function AdminSidebar({ isCollapsed, setIsCollapsed }: AdminSideb
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-40 h-screen bg-white border-r transition-all duration-500 ease-in-out shadow-2xl shadow-bhutan-maroon/5',
+        'fixed left-0 top-0 z-40 h-screen bg-white dark:bg-slate-900 border-r transition-all duration-500 ease-in-out shadow-2xl shadow-bhutan-maroon/5',
         isCollapsed ? 'w-20' : 'w-64'
       )}
     >
       <div className="flex h-full flex-col">
         {/* Logo */}
-        <div className="flex h-20 items-center justify-between border-b border-slate-100 px-4">
+        <div className="flex h-20 items-center justify-between border-b border-slate-100 dark:border-slate-800 px-4">
           {!isCollapsed && (
             <Link href="/admin/dashboard" className="flex items-center gap-3 group">
-              <div className="relative h-12 w-12 flex items-center justify-center rounded-full bg-white shadow-lg ring-2 ring-bhutan-maroon/5 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 ease-out overflow-hidden">
+              <div className="relative h-12 w-12 flex items-center justify-center rounded-full bg-white dark:bg-slate-900 shadow-lg ring-2 ring-bhutan-maroon/5 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 ease-out overflow-hidden">
                 <Image
                   src="/images/logo.png"
                   alt="Jinda Logo"
@@ -49,13 +49,13 @@ export default function AdminSidebar({ isCollapsed, setIsCollapsed }: AdminSideb
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-black tracking-tight text-slate-800">Jinda</span>
+                <span className="text-sm font-black tracking-tight text-slate-800 dark:text-white">Jinda</span>
                 <span className="text-[10px] font-black text-bhutan-maroon uppercase tracking-widest">Admin Desk</span>
               </div>
             </Link>
           )}
           {isCollapsed && (
-            <div className="relative h-12 w-12 flex items-center justify-center rounded-full bg-white mx-auto shadow-lg ring-2 ring-bhutan-maroon/5 hover:scale-110 hover:rotate-12 transition-all duration-500 ease-out overflow-hidden">
+            <div className="relative h-12 w-12 flex items-center justify-center rounded-full bg-white dark:bg-slate-900 mx-auto shadow-lg ring-2 ring-bhutan-maroon/5 hover:scale-110 hover:rotate-12 transition-all duration-500 ease-out overflow-hidden">
               <Image
                 src="/images/logo.png"
                 alt="Jinda Logo"
@@ -91,7 +91,7 @@ export default function AdminSidebar({ isCollapsed, setIsCollapsed }: AdminSideb
                   'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all duration-300 hover-lift group',
                   isActive
                     ? 'bg-bhutan-maroon text-bhutan-gold shadow-lg shadow-bhutan-maroon/20'
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-bhutan-maroon',
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-900/50 hover:text-bhutan-maroon',
                   isCollapsed && 'justify-center px-0'
                 )}
                 title={isCollapsed ? item.label : undefined}
@@ -110,7 +110,7 @@ export default function AdminSidebar({ isCollapsed, setIsCollapsed }: AdminSideb
         </nav>
 
         {/* Bottom Actions */}
-        <div className="border-t border-slate-100 p-4 space-y-2">
+        <div className="border-t border-slate-100 dark:border-slate-800 p-4 space-y-2">
           {isCollapsed && (
             <Button
               variant="ghost"
@@ -124,7 +124,7 @@ export default function AdminSidebar({ isCollapsed, setIsCollapsed }: AdminSideb
           <Button
             variant="ghost"
             className={cn(
-              'w-full justify-start gap-4 h-12 rounded-xl text-slate-500 font-bold hover:bg-red-50 hover:text-red-600 transition-all duration-300',
+              'w-full justify-start gap-4 h-12 rounded-xl text-slate-500 dark:text-slate-400 font-bold hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 transition-all duration-300',
               isCollapsed && 'justify-center px-0'
             )}
             onClick={() => signOut({ callbackUrl: '/admin/login' })}

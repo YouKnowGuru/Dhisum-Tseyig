@@ -51,7 +51,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900/50 p-4 relative overflow-hidden">
       {/* Dynamic Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-bhutan-gold/10 blur-[120px] rounded-full animate-float" />
@@ -63,13 +63,13 @@ export default function AdminLoginPage() {
           <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-bhutan-maroon shadow-2xl shadow-bhutan-maroon/30 mb-6 group hover:rotate-6 transition-transform duration-500">
             <Shield className="h-10 w-10 text-bhutan-gold group-hover:scale-110 transition-transform" />
           </div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter mb-2">Registry Access</h1>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter mb-2">Registry Access</h1>
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Jinda Administrative Portal</p>
         </div>
 
-        <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white/80 backdrop-blur-xl">
+        <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
           <CardHeader className="pt-12 pb-8 px-10 text-center">
-            <CardTitle className="text-2xl font-black text-slate-800 tracking-tight">Authorized Entry Only</CardTitle>
+            <CardTitle className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Authorized Entry Only</CardTitle>
             <CardDescription className="font-bold text-slate-400 mt-2">
               Please present your administrative credentials
             </CardDescription>
@@ -77,7 +77,7 @@ export default function AdminLoginPage() {
           <CardContent className="px-10 pb-12">
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
-                <div className="bg-red-50 border border-red-100 text-red-600 rounded-2xl p-4 text-sm font-bold animate-float flex items-center gap-3">
+                <div className="bg-red-50 dark:bg-red-950/30 border border-red-100 text-red-600 rounded-2xl p-4 text-sm font-bold animate-float flex items-center gap-3">
                   <div className="h-2 w-2 rounded-full bg-red-500" />
                   {error}
                 </div>
@@ -91,7 +91,7 @@ export default function AdminLoginPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
-                    className="h-14 bg-slate-100/50 border-transparent focus:bg-white focus:ring-bhutan-maroon/20 rounded-2xl font-bold transition-all px-6"
+                    className="h-14 bg-slate-100/50 border-transparent focus:bg-white dark:bg-slate-900 focus:ring-bhutan-maroon/20 rounded-2xl font-bold transition-all px-6"
                     placeholder="Enter admin ID"
                   />
                 </div>
@@ -106,7 +106,7 @@ export default function AdminLoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="h-14 bg-slate-100/50 border-transparent focus:bg-white focus:ring-bhutan-maroon/20 rounded-2xl font-bold transition-all px-6 pr-14"
+                    className="h-14 bg-slate-100/50 border-transparent focus:bg-white dark:bg-slate-900 focus:ring-bhutan-maroon/20 rounded-2xl font-bold transition-all px-6 pr-14"
                     placeholder="••••••••"
                   />
                   <button

@@ -81,7 +81,7 @@ export default function CreateLicensePage() {
 
         <Card className="max-w-lg mx-auto">
           <CardContent className="p-6 text-center">
-            <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+            <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center mx-auto mb-4">
               <Check className="h-8 w-8 text-green-600" />
             </div>
             <h2 className="text-2xl font-bold mb-2">License Created!</h2>
