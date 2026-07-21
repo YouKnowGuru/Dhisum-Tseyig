@@ -71,8 +71,7 @@ build-electron.bat
 *.md
 !README.md
 
-# Electron Client App
-New folder/
+# Electron Client App (POS app code IS tracked — needed for CI/CD)
 dist-electron/
 
 # Test Files

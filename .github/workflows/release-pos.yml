@@ -1,0 +1,130 @@
+# Release POS — Builds Windows installer on version tag and creates GitHub Release
+#
+# TRIGGER: Push a tag like v1.0.0 or v1.1.0-beta.1
+#   git tag v1.1.0
+#   git push origin v1.1.0
+#
+# WHAT IT DOES:
+#   1. Builds the Vite frontend
+#   2. Compiles Electron TypeScript
+#   3. Creates Windows NSIS installer + portable exe
+#   4. Uploads artifacts to a GitHub Release
+#   5. The POS auto-updater picks up the new release from /api/updates
+#
+# The website server's /api/updates/latest endpoint should be updated
+# manually or via a separate script to point to the new release.
+
+name: Release POS Desktop
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write  # Needed to create GitHub releases
+
+jobs:
+  build-windows:
+    name: Build Windows Installer
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ./New folder/app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./New folder/app
+        run: npm ci
+
+      - name: Build frontend (Vite)
+        working-directory: ./New folder/app
+        run: npm run build
+
+      - name: Compile Electron TypeScript
+        working-directory: ./New folder/app
+        run: npm run electron:compile
+
+      - name: Build Windows installer
+        working-directory: ./New folder/app
+        run: npx electron-builder --win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jinda-setup-${{ github.ref_name }}
+          path: |
+            ./New folder/app/release/*.exe
+          retention-days: 30
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Jinda POS ${{ github.ref_name }}
+          body: |
+            ## Jinda POS ${{ github.ref_name }}
+
+            ### Downloads
+            - **Jinda Setup.exe** — Windows installer (recommended)
+            - **Jinda-Portable.exe** — Portable version (no install needed)
+
+            ### What's New
+            <!-- Add release notes here or update manually -->
+
+            ### Auto-Update
+            Existing users will be prompted to update automatically.
+          files: |
+            ./New folder/app/release/*.exe
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================
+  # Update the website's update manifest
+  # ============================================
+  notify-website:
+    name: Update Release Manifest
+    needs: build-windows
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create update manifest
+        run: |
+          cat > update-manifest.json << EOF
+          {
+            "version": "${{ steps.version.outputs.version }}",
+            "releaseDate": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "isMandatory": false,
+            "releaseNotes": "See GitHub release for details.",
+            "downloadUrl": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/Jinda-Setup-${{ steps.version.outputs.version }}.exe"
+          }
+          EOF
+          cat update-manifest.json
+
+      - name: Summary
+        run: |
+          echo "## Release Created" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Update the \`/api/updates/latest\` endpoint on the website with the new version info" >> $GITHUB_STEP_SUMMARY
+          echo "2. Upload the installer to the website's download storage (S3/R2)" >> $GITHUB_STEP_SUMMARY
+          echo "3. POS users will auto-update on next check" >> $GITHUB_STEP_SUMMARY

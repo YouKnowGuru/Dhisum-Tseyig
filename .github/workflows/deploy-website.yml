@@ -1,0 +1,60 @@
+# Deploy Website — Auto-deploys Next.js to Vercel on push to main
+#
+# SETUP REQUIRED:
+# 1. Install Vercel CLI: npm i -g vercel
+# 2. Run `vercel link` in the project root
+# 3. Add these GitHub repository secrets:
+#    - VERCEL_TOKEN       → Your Vercel API token (Settings → Tokens)
+#    - VERCEL_ORG_ID      → From .vercel/project.json after `vercel link`
+#    - VERCEL_PROJECT_ID  → From .vercel/project.json after `vercel link`
+#
+# Environment variables (set in Vercel dashboard, not here):
+#   MONGODB_URI, NEXTAUTH_SECRET, AWS_*,
+#   SMTP_*, OPENROUTER_API_KEY
+
+name: Deploy Website
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy to production
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "deploy_url=$url" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Summary
+        run: echo "Deployed to ${{ steps.deploy.outputs.deploy_url }}" >> $GITHUB_STEP_SUMMARY

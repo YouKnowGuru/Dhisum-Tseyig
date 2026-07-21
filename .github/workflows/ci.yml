@@ -1,0 +1,104 @@
+# CI — Runs on every push and pull request
+# Lints, builds, and tests both the website and POS app
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ============================================
+  # JOB 1: Website (Next.js)
+  # ============================================
+  website:
+    name: Website (Next.js)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true  # Don't fail CI on lint warnings yet
+
+      - name: Build
+        run: npm run build
+        env:
+          MONGODB_URI: mongodb://localhost:27017/test
+          NEXTAUTH_SECRET: ci-test-secret-key-not-for-production
+          NEXTAUTH_URL: http://localhost:3000
+
+  # ============================================
+  # JOB 2: POS Desktop (Electron)
+  # ============================================
+  pos-desktop:
+    name: POS Desktop (Electron)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./New folder/app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ./New folder/app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build (Vite)
+        run: npm run build
+
+      - name: Accounting tests
+        run: node scripts/tests/run-tests.mjs
+
+  # ============================================
+  # JOB 3: Accounting Tests (standalone)
+  # ============================================
+  accounting-tests:
+    name: Accounting Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./New folder/app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install better-sqlite3
+        run: npm install better-sqlite3
+
+      - name: Run accounting tests
+        run: node scripts/tests/run-tests.mjs
