@@ -52,6 +52,7 @@ export function POSPage() {
   const itemsRef = useRef(items);
   const customersRef = useRef(customers);
   const searchRequestId = useRef(0);
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { cartRef.current = cart; }, [cart]);
   useEffect(() => { itemsRef.current = items; }, [items]);
@@ -175,10 +176,17 @@ export function POSPage() {
   // Search items when query changes (supports barcode scanner input)
   useEffect(() => {
     if (searchQuery.length >= 1) {
-      searchItems();
+      if (searchDebounce.current) clearTimeout(searchDebounce.current);
+      searchDebounce.current = setTimeout(() => {
+        searchItems();
+      }, 150);
     } else {
+      if (searchDebounce.current) clearTimeout(searchDebounce.current);
       setSearchResults([]);
     }
+    return () => {
+      if (searchDebounce.current) clearTimeout(searchDebounce.current);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
@@ -682,6 +690,14 @@ export function POSPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (searchDebounce.current) clearTimeout(searchDebounce.current);
+                if (searchQuery.trim().length >= 1) {
+                  searchItems();
+                }
+              }
+            }}
             placeholder="Scan barcode or search products by name, code..."
             className="w-full pl-10 pr-4 py-4 border-gray-200 rounded-2xl focus:ring-2 focus:ring-bhutan-maroon focus:border-transparent shadow-sm bg-white"
           />
