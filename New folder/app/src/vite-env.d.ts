@@ -236,7 +236,7 @@ declare global {
         delete: (id: number) => Promise<any>;
       };
       auditLogs: {
-        getAll: () => Promise<any>;
+        getAll: (params?: { page?: number; limit?: number; search?: string; action?: string }) => Promise<any>;
       };
       barcodes: {
         getAll: () => Promise<any>;

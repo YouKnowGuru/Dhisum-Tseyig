@@ -231,7 +231,7 @@ export class InventoryService {
           OR bm.barcode LIKE ?
         )
         ORDER BY match_order, i.name
-        LIMIT 20
+        LIMIT 50
       `).all(query, query, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
 
       return items.map((i: any) => ({

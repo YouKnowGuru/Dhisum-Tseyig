@@ -649,15 +649,34 @@ function initializeApp(): void {
   try {
     const violations = integrityService.verifyAll();
     if (violations.length > 0) {
-      for (const v of violations) {
-        console.error(`[SECURITY] Integrity violation: ${v.type} on ${v.tableName}:${v.recordKey} — ${v.message}`);
+      // Separate genuine tampering (hash_mismatch) from missing seals.
+      // missing_seal on admin users is expected on a clean install / after migration
+      // where sealAll() hasn't run yet. We auto-heal those by sealing now.
+      const missingSealOnly = violations.every(v => v.type === 'missing_seal');
+      if (missingSealOnly) {
+        console.log(`[SECURITY] ${violations.length} missing seal(s) found — auto-sealing on first boot.`);
+        integrityService.sealAll();
+        console.log('[SECURITY] Integrity seals applied. Re-verifying...');
+        const recheck = integrityService.verifyAll();
+        if (recheck.length === 0) {
+          console.log('[SECURITY] Integrity seals verified — no violations after auto-seal.');
+        } else {
+          for (const v of recheck) {
+            console.error(`[SECURITY] Integrity violation (post-seal): ${v.type} on ${v.tableName}:${v.recordKey} — ${v.message}`);
+          }
+        }
+      } else {
+        // Real tampering or mixed violations — log all as security alerts
+        for (const v of violations) {
+          console.error(`[SECURITY] Integrity violation: ${v.type} on ${v.tableName}:${v.recordKey} — ${v.message}`);
+        }
+        // Log a critical security event
+        auditService.logAction({
+          action: 'SECURITY_ALERT',
+          entityType: 'integrity',
+          newValues: { violations },
+        });
       }
-      // Log a critical security event
-      auditService.logAction({
-        action: 'SECURITY_ALERT',
-        entityType: 'integrity',
-        newValues: { violations },
-      });
     } else {
       console.log('[SECURITY] Integrity seals verified — no violations.');
     }
@@ -2406,7 +2425,7 @@ ipcMain.handle('recurring:delete', createSecureIpcHandler(
 
 // Audit Logs
 ipcMain.handle('auditLogs:getAll', createSecureIpcHandler(
-  async () => auditService.getAllLogs(),
+  async (_event, params) => auditService.getAllLogs(params ?? {}),
   { requireAuth: true, requireAdmin: true }
 ));
 

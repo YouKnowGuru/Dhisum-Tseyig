@@ -1235,7 +1235,8 @@ const secureExpenses = {
 };
 
 const secureAuditLogs = {
-  getAll: async () => ipcRenderer.invoke('auditLogs:getAll'),
+  getAll: async (params?: { page?: number; limit?: number; search?: string; action?: string }) =>
+    ipcRenderer.invoke('auditLogs:getAll', params),
 };
 
 const secureBarcodes = {

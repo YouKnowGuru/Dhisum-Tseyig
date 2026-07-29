@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   Search, Shield, Download, ClipboardList,
   User as UserIcon, Eye, Clock,
   LogIn, Trash2, Plus, Edit, Lock, XCircle,
   ArrowLeftRight, DollarSign, Receipt, Package,
-  RefreshCw, ChevronLeft, ChevronRight, Filter
+  RefreshCw, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
@@ -84,81 +84,108 @@ export function AuditLogViewer() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAction, setFilterAction] = useState('');
-  const [filterCategory, setFilterCategory] = useState<string>('');
   const [selectedLog, setSelectedLog] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 25;
+  const [totalLogs, setTotalLogs] = useState(0);
+  const [stats, setStats] = useState({ totalActions: 0, uniqueUsers: 0, todayCount: 0, deleteCount: 0, loginCount: 0, saleCount: 0 });
+  const PAGE_SIZE = 100;
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { loadLogs(); }, []);
+  // Unique actions for the dropdown — derived from currently loaded page
+  // (good enough; avoids a separate query)
+  const uniqueActions = useMemo(() => [...new Set(logs.map(l => l.action))], [logs]);
 
-  const loadLogs = async () => {
+  // ─── Load page from server ───────────────────────────────────────────────
+
+  const loadLogs = useCallback(async (page: number, search: string, action: string) => {
     setLoading(true);
     try {
-      const result = await window.electronSecureAPI.auditLogs.getAll();
-      if (result?.success) {
-        setLogs(result.data || []);
+      const result = await window.electronSecureAPI.auditLogs.getAll({
+        page,
+        limit: PAGE_SIZE,
+        search: search || undefined,
+        action: action || undefined,
+      });
+      if (result?.success && result.data) {
+        setLogs(result.data.logs ?? []);
+        setTotalLogs(result.data.total ?? 0);
       } else {
         setLogs([]);
+        setTotalLogs(0);
         showNotification(result?.message || 'Failed to load logs', 'error');
       }
     } catch (error) {
       console.error('Audit logs error:', error);
       setLogs([]);
+      setTotalLogs(0);
     } finally {
       setLoading(false);
     }
+  }, [showNotification]);
+
+  // ─── Load summary stats (once on mount) ─────────────────────────────────
+
+  const loadStats = useCallback(async () => {
+    try {
+      // Fetch a broader sample for stats widgets (no search/action filters)
+      const result = await window.electronSecureAPI.auditLogs.getAll({ page: 1, limit: 500 });
+      if (result?.success && result.data) {
+        const all: any[] = result.data.logs ?? [];
+        const today = new Date().toISOString().split('T')[0];
+        setStats({
+          totalActions: result.data.total,
+          uniqueUsers: new Set(all.map(l => l.user_id)).size,
+          todayCount: all.filter(l => l.created_at?.startsWith(today)).length,
+          deleteCount: all.filter(l => l.action.includes('DELETE')).length,
+          loginCount: all.filter(l => l.action.includes('LOGIN')).length,
+          saleCount: all.filter(l => l.action.includes('SALE')).length,
+        });
+      }
+    } catch { /* stats are non-critical */ }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    loadLogs(1, '', '');
+    loadStats();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Re-load when page changes
+  useEffect(() => {
+    loadLogs(currentPage, searchQuery, filterAction);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
+  // Debounced search / action filter — reset to page 1
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (searchDebounce.current) clearTimeout(searchDebounce.current);
+    searchDebounce.current = setTimeout(() => {
+      setCurrentPage(1);
+      loadLogs(1, value, filterAction);
+    }, 400);
   };
 
-  // ─── Stats ──────────────────────────────────────────────────────────────
-
-  const stats = useMemo(() => {
-    const totalActions = logs.length;
-    const uniqueUsers = new Set(logs.map(l => l.user_id)).size;
-    const today = new Date().toISOString().split('T')[0];
-    const todayCount = logs.filter(l => l.created_at?.startsWith(today)).length;
-    const deleteCount = logs.filter(l => l.action.includes('DELETE')).length;
-    const loginCount = logs.filter(l => l.action.includes('LOGIN')).length;
-    const saleCount = logs.filter(l => l.action.includes('SALE')).length;
-    return { totalActions, uniqueUsers, todayCount, deleteCount, loginCount, saleCount };
-  }, [logs]);
-
-  // ─── Filtered ───────────────────────────────────────────────────────────
-
-  const filteredLogs = useMemo(() => {
-    return logs.filter(log => {
-      const userStr = `${log.full_name || ''} ${log.username || ''}`.toLowerCase();
-      const actionStr = log.action.toLowerCase();
-      const entityStr = (log.entity_type || '').toLowerCase();
-      const q = searchQuery.toLowerCase();
-
-      const matchesSearch = !q || userStr.includes(q) || actionStr.includes(q) || entityStr.includes(q);
-      const matchesAction = !filterAction || log.action === filterAction;
-      const matchesCategory = !filterCategory || getActionConfig(log.action).category === filterCategory;
-      return matchesSearch && matchesAction && matchesCategory;
-    });
-  }, [logs, searchQuery, filterAction, filterCategory]);
+  const handleActionChange = (value: string) => {
+    setFilterAction(value);
+    setCurrentPage(1);
+    loadLogs(1, searchQuery, value);
+  };
 
   // ─── Pagination ─────────────────────────────────────────────────────────
 
-  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / pageSize));
-  const paginatedLogs = filteredLogs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const totalPages = Math.max(1, Math.ceil(totalLogs / PAGE_SIZE));
 
-  useEffect(() => { setCurrentPage(1); }, [searchQuery, filterAction, filterCategory]);
-
-  // ─── Unique actions for dropdown ────────────────────────────────────────
-
-  const uniqueActions = [...new Set(logs.map(l => l.action))];
-
-  // ─── Export CSV ─────────────────────────────────────────────────────────
+  // ─── Export CSV (current page only) ─────────────────────────────────────
 
   const exportToCSV = () => {
-    if (filteredLogs.length === 0) {
+    if (logs.length === 0) {
       showNotification('No data to export', 'error');
       return;
     }
     const headers = ['#', 'Date/Time', 'Action', 'User', 'Username', 'Entity', 'Entity ID', 'Details'];
-    const rows = filteredLogs.map(l => {
+    const rows = logs.map(l => {
       let details = '';
       try {
         const vals = typeof l.new_values === 'string' ? JSON.parse(l.new_values) : l.new_values;
@@ -186,7 +213,7 @@ export function AuditLogViewer() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showNotification(`${filteredLogs.length} records exported`, 'success');
+    showNotification(`${logs.length} records exported`, 'success');
   };
 
   // ─── Render ─────────────────────────────────────────────────────────────
@@ -207,7 +234,7 @@ export function AuditLogViewer() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={loadLogs}
+            onClick={() => { loadLogs(currentPage, searchQuery, filterAction); loadStats(); }}
             className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-sm font-bold text-slate-600 transition-all shadow-sm"
             title="Refresh"
           >
@@ -215,7 +242,7 @@ export function AuditLogViewer() {
           </button>
           <button
             onClick={exportToCSV}
-            disabled={filteredLogs.length === 0}
+            disabled={logs.length === 0}
             className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 text-sm font-black shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             <Download className="w-4 h-4" />
@@ -239,7 +266,7 @@ export function AuditLogViewer() {
               <div className={`w-2 h-2 rounded-full ${stat.color}`} />
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</span>
             </div>
-            <p className={`text-2xl font-black ${stat.textColor}`}>{stat.value}</p>
+            <p className={`text-2xl font-black ${stat.textColor}`}>{stat.value.toLocaleString()}</p>
           </div>
         ))}
       </div>
@@ -251,37 +278,17 @@ export function AuditLogViewer() {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:border-slate-400 outline-none transition-all placeholder:text-slate-400"
             placeholder="Search by action, user, or entity..."
           />
         </div>
 
         <div className="relative">
-          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="pl-9 pr-8 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:border-slate-400 outline-none appearance-none cursor-pointer transition-all"
-          >
-            <option value="">All Categories</option>
-            <option value="auth">Authentication</option>
-            <option value="create">Created</option>
-            <option value="update">Updated</option>
-            <option value="delete">Deleted</option>
-            <option value="sale">Sales</option>
-            <option value="payment">Payments</option>
-            <option value="void">Voided</option>
-            <option value="transfer">Transfers</option>
-            <option value="inventory">Inventory</option>
-          </select>
-        </div>
-
-        <div className="relative">
           <ClipboardList className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <select
             value={filterAction}
-            onChange={(e) => setFilterAction(e.target.value)}
+            onChange={(e) => handleActionChange(e.target.value)}
             className="pl-9 pr-8 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:border-slate-400 outline-none appearance-none cursor-pointer transition-all max-w-[200px]"
           >
             <option value="">All Actions</option>
@@ -291,9 +298,9 @@ export function AuditLogViewer() {
           </select>
         </div>
 
-        {(searchQuery || filterAction || filterCategory) && (
+        {(searchQuery || filterAction) && (
           <span className="text-xs font-bold text-slate-500">
-            {filteredLogs.length} result{filteredLogs.length !== 1 ? 's' : ''}
+            {totalLogs.toLocaleString()} result{totalLogs !== 1 ? 's' : ''}
           </span>
         )}
       </div>
@@ -305,7 +312,7 @@ export function AuditLogViewer() {
             <div className="w-10 h-10 border-4 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-slate-400 font-bold text-sm">Loading audit trail...</p>
           </div>
-        ) : filteredLogs.length === 0 ? (
+        ) : logs.length === 0 ? (
           <div className="text-center py-32 bg-slate-50/50">
             <ClipboardList className="w-14 h-14 text-slate-200 mx-auto mb-4" />
             <p className="text-slate-400 font-bold">No matching records found</p>
@@ -324,7 +331,7 @@ export function AuditLogViewer() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {paginatedLogs.map((log: any) => {
+                  {logs.map((log: any) => {
                     const config = getActionConfig(log.action);
                     const ActionIcon = config.icon;
                     return (
@@ -406,7 +413,7 @@ export function AuditLogViewer() {
             {totalPages > 1 && (
               <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/30">
                 <span className="text-xs font-medium text-slate-500">
-                  Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredLogs.length)} of {filteredLogs.length}
+                  Showing {((currentPage - 1) * PAGE_SIZE + 1).toLocaleString()}–{Math.min(currentPage * PAGE_SIZE, totalLogs).toLocaleString()} of {totalLogs.toLocaleString()}
                 </span>
                 <div className="flex items-center gap-1">
                   <button

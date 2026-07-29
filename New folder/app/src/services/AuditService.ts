@@ -115,19 +115,54 @@ export class AuditService {
   }
 
   /**
-   * Get all audit logs with user details
+   * Get paginated audit logs with optional filtering.
+   * Returns { logs, total } for server-side pagination.
    */
-  getAllLogs(limit: number = 500): ApiResponse<AuditLog[]> {
+  getAllLogs(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    action?: string;
+  } = {}): ApiResponse<{ logs: AuditLog[]; total: number }> {
     try {
+      const page = Math.max(1, params.page ?? 1);
+      const limit = Math.min(Math.max(1, params.limit ?? 100), 500);
+      const offset = (page - 1) * limit;
+      const searchTerm = params.search?.trim() ? `%${params.search.trim()}%` : null;
+      const actionFilter = params.action?.trim() || null;
+
+      // Build WHERE clauses
+      const conditions: string[] = [];
+      const bindings: any[] = [];
+
+      if (actionFilter) {
+        conditions.push('l.action = ?');
+        bindings.push(actionFilter);
+      }
+      if (searchTerm) {
+        conditions.push('(u.username LIKE ? OR u.full_name LIKE ? OR l.action LIKE ? OR l.entity_type LIKE ?)');
+        bindings.push(searchTerm, searchTerm, searchTerm, searchTerm);
+      }
+
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+      const countRow = this.db.prepare(`
+        SELECT COUNT(*) AS cnt
+        FROM audit_logs l
+        LEFT JOIN users u ON l.user_id = u.id
+        ${where}
+      `).get(...bindings) as { cnt: number };
+
       const logs = this.db.prepare(`
         SELECT l.*, u.username, u.full_name
         FROM audit_logs l
         LEFT JOIN users u ON l.user_id = u.id
+        ${where}
         ORDER BY l.created_at DESC
-        LIMIT ?
-      `).all(limit) as AuditLog[];
+        LIMIT ? OFFSET ?
+      `).all(...bindings, limit, offset) as AuditLog[];
 
-      return { success: true, data: logs };
+      return { success: true, data: { logs, total: countRow.cnt } };
     } catch (error: any) {
       return { success: false, message: 'Failed to fetch audit logs: ' + error.message };
     }

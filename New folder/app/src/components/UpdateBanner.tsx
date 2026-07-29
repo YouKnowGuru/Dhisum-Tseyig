@@ -7,6 +7,18 @@ export function UpdateBanner() {
   const [dismissed, setDismissed] = useState(false);
   const [installing, setInstalling] = useState(false);
 
+  // Restore dismissed state from localStorage on mount so the banner
+  // doesn't re-appear after the user closes and re-opens the app for the
+  // same version they already dismissed.
+  useEffect(() => {
+    if (updateInfo?.version) {
+      const dismissedVersion = localStorage.getItem('update:dismissed_version');
+      if (dismissedVersion === updateInfo.version) {
+        setDismissed(true);
+      }
+    }
+  }, [updateInfo?.version]);
+
   useEffect(() => {
     const api = window.electronSecureAPI;
     if (!api?.update) return;
@@ -88,6 +100,11 @@ export function UpdateBanner() {
   };
 
   const handleDismiss = () => {
+    // Persist the dismissed version so the banner stays hidden across restarts
+    // until a genuinely newer version is available.
+    if (updateInfo?.version) {
+      localStorage.setItem('update:dismissed_version', updateInfo.version);
+    }
     setDismissed(true);
   };
 
