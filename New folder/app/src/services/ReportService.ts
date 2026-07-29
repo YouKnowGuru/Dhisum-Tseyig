@@ -80,7 +80,7 @@ export class ReportService {
           COUNT(i.id) as pending_invoices,
           SUM(i.balance_due) as total_due,
           MAX(i.due_date) as last_due_date,
-          julianday(date('now')) - julianday(MAX(i.due_date)) as days_overdue
+          julianday(date('now', 'localtime')) - julianday(MAX(i.due_date)) as days_overdue
         FROM contacts c
         JOIN invoices i ON c.id = i.contact_id
         WHERE c.type = 'customer'
@@ -144,7 +144,7 @@ export class ReportService {
           ), 0) as sales,
           COALESCE(SUM(CASE WHEN type = 'payment' THEN net_amount ELSE 0 END), 0) as expenses
         FROM transactions
-        WHERE date >= date('now', '-29 days') AND is_void = 0
+        WHERE date >= date('now', 'localtime', '-29 days') AND is_void = 0
         GROUP BY date
         ORDER BY date ASC
       `).all();
@@ -210,7 +210,7 @@ export class ReportService {
           ), 0) as income,
           COALESCE(SUM(CASE WHEN type IN ('payment', 'purchase') THEN net_amount ELSE 0 END), 0) as expenses
         FROM transactions
-        WHERE date >= date('now', '-6 months') AND is_void = 0
+        WHERE date >= date('now', 'localtime', '-6 months') AND is_void = 0
         GROUP BY strftime('%Y-%m', date)
         ORDER BY month ASC
       `).all();
@@ -355,7 +355,7 @@ export class ReportService {
         FROM accounts a
         LEFT JOIN transaction_lines tl ON a.id = tl.account_id
         LEFT JOIN transactions t ON tl.transaction_id = t.id
-        WHERE a.is_active = 1
+        WHERE (a.is_active IS NULL OR a.is_active = 1)
           AND (t.id IS NULL OR (t.date <= ? AND t.is_void = 0))
         GROUP BY a.id
         HAVING total_debits > 0 OR total_credits > 0
@@ -493,7 +493,7 @@ export class ReportService {
         FROM accounts a
         LEFT JOIN transaction_lines tl ON a.id = tl.account_id
         LEFT JOIN transactions t ON tl.transaction_id = t.id
-        WHERE a.type = 'asset' AND a.is_active = 1
+        WHERE a.type = 'asset' AND (a.is_active IS NULL OR a.is_active = 1)
           AND (t.id IS NULL OR (t.date <= ? AND t.is_void = 0))
         GROUP BY a.id
         HAVING balance != 0
@@ -511,7 +511,7 @@ export class ReportService {
         FROM accounts a
         LEFT JOIN transaction_lines tl ON a.id = tl.account_id
         LEFT JOIN transactions t ON tl.transaction_id = t.id
-        WHERE a.type = 'liability' AND a.is_active = 1
+        WHERE a.type = 'liability' AND (a.is_active IS NULL OR a.is_active = 1)
           AND (t.id IS NULL OR (t.date <= ? AND t.is_void = 0))
         GROUP BY a.id
         HAVING balance != 0
@@ -528,7 +528,7 @@ export class ReportService {
         FROM accounts a
         LEFT JOIN transaction_lines tl ON a.id = tl.account_id
         LEFT JOIN transactions t ON tl.transaction_id = t.id
-        WHERE a.type = 'equity' AND a.is_active = 1
+        WHERE a.type = 'equity' AND (a.is_active IS NULL OR a.is_active = 1)
           AND (t.id IS NULL OR (t.date <= ? AND t.is_void = 0))
         GROUP BY a.id
         HAVING balance != 0
@@ -544,8 +544,10 @@ export class ReportService {
       const totalLiabilities = (liabilities as any[]).reduce((sum: number, l: any) => sum + l.balance, 0);
       const equitySum = (equity as any[]).reduce((sum: number, e: any) => sum + e.balance, 0);
 
-      // Calculate Net Profit for the period up to the report date
-      const profitResult = this.getProfitLoss('1900-01-01', date);
+      // Calculate Net Profit up to the report date
+      // Use current year start instead of scanning back to 1900
+      const yearStart = `${date.substring(0, 4)}-01-01`;
+      const profitResult = this.getProfitLoss(yearStart, date);
       const netProfit = profitResult.success ? profitResult.data!.netProfit : 0;
 
       const equityItems = (equity as any[]).map((e: any) => ({ name: e.name, balance: e.balance }));
@@ -568,7 +570,11 @@ export class ReportService {
           total: totalLiabilities
         },
         equity: equityItems,
-        totalEquity: totalLiabilities + equitySum + netProfit
+        // BUG FIX: totalEquity must be equity + net profit ONLY. The previous
+        // formula added totalLiabilities in as well, which inflated the equity
+        // section by the entire liability total and broke A = L + E (the sheet
+        // could never balance). Liabilities are reported separately above.
+        totalEquity: equitySum + netProfit
       };
 
       return { success: true, data };
@@ -593,9 +599,10 @@ export class ReportService {
           c.current_balance,
           COUNT(i.id) as pending_invoices,
           MIN(i.due_date) as oldest_due_date,
-          julianday(date('now')) - julianday(MIN(i.due_date)) as days_overdue
+          julianday(date('now', 'localtime')) - julianday(MIN(i.due_date)) as days_overdue
         FROM contacts c
         LEFT JOIN invoices i ON c.id = i.contact_id AND i.is_void = 0
+          AND i.payment_status IN ('unpaid', 'partial')
         WHERE ABS(c.current_balance) > 0.01
       `;
 
@@ -657,6 +664,7 @@ export class ReportService {
         FROM items
         WHERE is_active = 1
         ORDER BY name
+        LIMIT 500
           `).all();
 
       const summary = this.db.prepare(`
@@ -824,6 +832,7 @@ export class ReportService {
         WHERE (t.type = 'sale' OR (t.type = 'adjustment' AND t.id IN (SELECT transaction_id FROM refunds)))
           AND t.date BETWEEN ? AND ? AND t.is_void = 0
         ORDER BY t.date DESC
+        LIMIT 100
           `).all(startDate, endDate);
 
       return {
@@ -912,6 +921,7 @@ export class ReportService {
         LEFT JOIN contacts c ON t.contact_id = c.id
         WHERE t.type = 'purchase' AND t.date BETWEEN ? AND ? AND t.is_void = 0
         ORDER BY t.date DESC
+        LIMIT 100
       `).all(startDate, endDate);
 
       return {

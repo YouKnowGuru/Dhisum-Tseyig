@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Search,
   Filter,
@@ -22,6 +22,10 @@ export function TransactionsPage() {
   const { showNotification } = useAppStore();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalTransactions, setTotalTransactions] = useState(0);
+  const TRANSACTIONS_PER_PAGE = 50;
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [filterType, setFilterType] = useState<string>('');
   const [showReceiveModal, setShowReceiveModal] = useState(false);
   const [showPayModal, setShowPayModal] = useState(false);
@@ -64,20 +68,27 @@ export function TransactionsPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
 
   useEffect(() => {
-    loadTransactions();
+    setCurrentPage(1);
+    loadTransactions(1, '', filterType);
     loadContacts();
     loadAccounts();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterType]);
 
-  const loadTransactions = async () => {
+  const loadTransactions = async (page: number, search: string, type: string) => {
     try {
-      const filters: any = {};
-      if (filterType) filters.type = filterType;
+      const filters: any = { page, limit: TRANSACTIONS_PER_PAGE, search };
+      if (type) filters.type = type;
 
       const result = await window.electronSecureAPI.transactions.getAll(filters);
       if (result?.success) {
-        setTransactions(Array.isArray(result.data) ? result.data : []);
+        if (result.data && typeof result.data === 'object' && 'transactions' in result.data) {
+          setTransactions(Array.isArray(result.data.transactions) ? result.data.transactions : []);
+          setTotalTransactions(typeof result.data.total === 'number' ? result.data.total : 0);
+        } else {
+          setTransactions(Array.isArray(result.data) ? result.data : []);
+          setTotalTransactions(Array.isArray(result.data) ? result.data.length : 0);
+        }
       }
     } catch (_error) {
       showNotification('Failed to load transactions', 'error');
@@ -138,7 +149,7 @@ export function TransactionsPage() {
       if (result.success) {
         showNotification('Payment received successfully', 'success');
         setShowReceiveModal(false);
-        loadTransactions();
+        loadTransactions(currentPage, searchQuery, filterType);
       } else {
         showNotification(result.message || 'Failed to receive payment', 'error');
       }
@@ -164,7 +175,7 @@ export function TransactionsPage() {
       if (result.success) {
         showNotification('Payment made successfully', 'success');
         setShowPayModal(false);
-        loadTransactions();
+        loadTransactions(currentPage, searchQuery, filterType);
       } else {
         showNotification(result.message || 'Failed to make payment', 'error');
       }
@@ -188,7 +199,7 @@ export function TransactionsPage() {
       if (result.success) {
         showNotification('Transfer completed successfully', 'success');
         setShowTransferModal(false);
-        loadTransactions();
+        loadTransactions(currentPage, searchQuery, filterType);
       } else {
         showNotification(result.message || 'Failed to transfer', 'error');
       }
@@ -270,7 +281,7 @@ export function TransactionsPage() {
       });
       if (result.success) {
         showNotification('Transaction voided successfully', 'success');
-        loadTransactions();
+        loadTransactions(currentPage, searchQuery, filterType);
       } else {
         showNotification(result.message || 'Failed to void transaction', 'error');
       }
@@ -289,21 +300,22 @@ export function TransactionsPage() {
       return;
     }
     try {
-      const result = await window.electronSecureAPI.emailInvoice?.send({
+      const result: any = await window.electronSecureAPI.emailInvoice?.send({
         customerEmail: emailInvoiceData.customerEmail,
         invoiceNo: emailInvoiceData.invoiceNo,
         totalAmount: emailInvoiceData.totalAmount,
         businessName: emailInvoiceData.businessName || 'Jinda',
       });
-      if (result?.success) {
+      const isSuccess = result?.success || (result?.ok !== false && result?.data?.success !== false);
+      if (isSuccess) {
         showNotification('Invoice email opened successfully', 'success');
         setShowEmailInvoice(false);
         setEmailInvoiceData({ customerEmail: '', invoiceNo: '', totalAmount: 0, businessName: '' });
       } else {
-        showNotification('Failed to send invoice email', 'error');
+        showNotification(result?.data?.error || result?.message || 'Failed to send invoice email', 'error');
       }
-    } catch {
-      showNotification('Failed to send invoice email', 'error');
+    } catch (error: any) {
+      showNotification(error?.message || 'Failed to send invoice email', 'error');
     }
   };
 
@@ -330,11 +342,22 @@ export function TransactionsPage() {
     }
   };
 
-  const filteredTransactions = transactions.filter(t =>
-    (t.transaction_no || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (t.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (t.contact_name || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredTransactions = transactions; // filtering is now server-side
+  const totalPages = Math.max(1, Math.ceil(totalTransactions / TRANSACTIONS_PER_PAGE));
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (searchDebounce.current) clearTimeout(searchDebounce.current);
+    searchDebounce.current = setTimeout(() => {
+      setCurrentPage(1);
+      loadTransactions(1, value, filterType);
+    }, 350);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    loadTransactions(page, searchQuery, filterType);
+  };
 
   return (
     <div className="space-y-6">
@@ -385,7 +408,7 @@ export function TransactionsPage() {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search by ID, Contact or description..."
             className="w-full pl-12 pr-4 py-3.5 bg-white/80 border-none rounded-[22px] focus:ring-2 focus:ring-bhutan-maroon/10 focus:bg-white transition-all font-medium text-slate-700 placeholder:text-slate-300"
           />
@@ -522,6 +545,42 @@ export function TransactionsPage() {
             </div>
             <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-sm">No ledger entries found</p>
             <p className="text-slate-300 text-xs mt-2 font-medium">Try adjusting your filters or search query</p>
+          </div>
+        )}
+
+        {/* Pagination Bar */}
+        {totalTransactions > TRANSACTIONS_PER_PAGE && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-50">
+            <p className="text-xs font-bold text-slate-400">
+              Showing {Math.min((currentPage - 1) * TRANSACTIONS_PER_PAGE + 1, totalTransactions)}–{Math.min(currentPage * TRANSACTIONS_PER_PAGE, totalTransactions)} of {totalTransactions.toLocaleString()} transactions
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage <= 1}
+                className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-slate-100 text-slate-500 hover:bg-bhutan-maroon hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >← Prev</button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+                const p = start + i;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => handlePageChange(p)}
+                    className={`w-9 h-9 rounded-xl text-xs font-black transition-all ${
+                      p === currentPage
+                        ? 'bg-bhutan-maroon text-white shadow-md'
+                        : 'bg-slate-100 text-slate-500 hover:bg-bhutan-maroon/10'
+                    }`}
+                  >{p}</button>
+                );
+              })}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages}
+                className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-slate-100 text-slate-500 hover:bg-bhutan-maroon hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >Next →</button>
+            </div>
           </div>
         )}
       </div>

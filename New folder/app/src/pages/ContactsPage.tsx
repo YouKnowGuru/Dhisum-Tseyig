@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Plus,
   Search,
@@ -24,6 +24,10 @@ export function ContactsPage({ type }: ContactsPageProps) {
   const { showNotification } = useAppStore();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalContacts, setTotalContacts] = useState(0);
+  const CONTACTS_PER_PAGE = 50;
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showLedgerModal, setShowLedgerModal] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -48,15 +52,22 @@ export function ContactsPage({ type }: ContactsPageProps) {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    loadContacts();
+    setCurrentPage(1);
+    loadContacts(1, '');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type]);
 
-  const loadContacts = async () => {
+  const loadContacts = async (page: number, search: string) => {
     try {
-      const result = await window.electronSecureAPI.contacts.getAll(type);
+      const result = await window.electronSecureAPI.contacts.getAll({ type, page, limit: CONTACTS_PER_PAGE, search });
       if (result?.success) {
-        setContacts(Array.isArray(result.data) ? result.data : []);
+        if (result.data && typeof result.data === 'object' && 'contacts' in result.data) {
+          setContacts(Array.isArray(result.data.contacts) ? result.data.contacts : []);
+          setTotalContacts(typeof result.data.total === 'number' ? result.data.total : 0);
+        } else {
+          setContacts(Array.isArray(result.data) ? result.data : []);
+          setTotalContacts(Array.isArray(result.data) ? result.data.length : 0);
+        }
       }
     } catch (_error) {
       showNotification(`Failed to load ${type}s`, 'error');
@@ -156,7 +167,7 @@ export function ContactsPage({ type }: ContactsPageProps) {
         showNotification(`${type === 'customer' ? 'Customer' : 'Supplier'} ${editingContactId ? 'updated' : 'created'} successfully`, 'success');
         setShowAddModal(false);
         setEditingContactId(null);
-        loadContacts();
+        loadContacts(currentPage, searchQuery);
         resetForm();
       } else {
         showNotification(result.message || `Failed to ${editingContactId ? 'update' : 'create'}`, 'error');
@@ -173,7 +184,7 @@ export function ContactsPage({ type }: ContactsPageProps) {
       const result = await window.electronSecureAPI.contacts.delete(id);
       if (result.success) {
         showNotification('Deleted successfully', 'success');
-        loadContacts();
+        loadContacts(currentPage, searchQuery);
       } else {
         showNotification(result.message || 'Failed to delete', 'error');
       }
@@ -251,11 +262,22 @@ export function ContactsPage({ type }: ContactsPageProps) {
     }).format(amount).replace('BTN', 'Nu.');
   };
 
-  const filteredContacts = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    contact.phone?.includes(searchQuery) ||
-    contact.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredContacts = contacts; // server-side filter
+  const totalPages = Math.max(1, Math.ceil(totalContacts / CONTACTS_PER_PAGE));
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (searchDebounce.current) clearTimeout(searchDebounce.current);
+    searchDebounce.current = setTimeout(() => {
+      setCurrentPage(1);
+      loadContacts(1, value);
+    }, 350);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    loadContacts(page, searchQuery);
+  };
 
   const icon = type === 'customer' ? User : Building2;
   const Icon = icon;
@@ -282,7 +304,7 @@ export function ContactsPage({ type }: ContactsPageProps) {
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder={`Search ${type}s by name, phone or email...`}
                 className="w-full pl-12 pr-4 py-3 bg-transparent border-none outline-none focus:ring-0 text-slate-700 placeholder:text-slate-400 font-medium h-full rounded-xl text-sm"
               />
@@ -406,6 +428,42 @@ export function ContactsPage({ type }: ContactsPageProps) {
               Add {type} <ArrowRight className="w-4 h-4" />
             </button>
           )}
+        </div>
+      )}
+
+      {/* Pagination Bar */}
+      {totalContacts > CONTACTS_PER_PAGE && (
+        <div className="flex items-center justify-between px-6 py-4 bg-white rounded-2xl border border-slate-100 shadow-sm mt-4">
+          <p className="text-xs font-bold text-slate-400">
+            Showing {Math.min((currentPage - 1) * CONTACTS_PER_PAGE + 1, totalContacts)}–{Math.min(currentPage * CONTACTS_PER_PAGE, totalContacts)} of {totalContacts.toLocaleString()} {type}s
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-slate-100 text-slate-500 hover:bg-bhutan-maroon hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >← Prev</button>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+              const p = start + i;
+              return (
+                <button
+                  key={p}
+                  onClick={() => handlePageChange(p)}
+                  className={`w-9 h-9 rounded-xl text-xs font-black transition-all ${
+                    p === currentPage
+                      ? 'bg-bhutan-maroon text-white shadow-md'
+                      : 'bg-slate-100 text-slate-500 hover:bg-bhutan-maroon/10'
+                  }`}
+                >{p}</button>
+              );
+            })}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-slate-100 text-slate-500 hover:bg-bhutan-maroon hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >Next →</button>
+          </div>
         </div>
       )}
 

@@ -9,6 +9,8 @@
   "author": "Jinda",
   "scripts": {
     "test": "node scripts/tests/run-tests.mjs",
+    "perf:seed": "node scripts/tests/perf-launch.cjs",
+    "electron:rebuild": "npx @electron/rebuild -f -w better-sqlite3",
     "dev": "concurrently \"vite\" \"node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.electron.json --watch\" \"wait-on http://127.0.0.1:5173 && npx electron .\"",
     "dev:win": "concurrently \"vite\" \"node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.electron.json --watch\" \"wait-on http://127.0.0.1:5173 && npx electron .\"",
     "dev:compile": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.electron.json",

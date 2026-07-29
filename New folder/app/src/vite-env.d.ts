@@ -40,7 +40,7 @@ declare global {
       // Inventory
       inventory: {
         createItem: (data: any) => Promise<any>;
-        getItems: () => Promise<any>;
+        getItems: (params?: { page?: number; limit?: number; search?: string }) => Promise<any>;
         getItem: (id: number) => Promise<any>;
         updateItem: (id: number, data: any) => Promise<any>;
         deleteItem: (id: number) => Promise<any>;
@@ -65,7 +65,7 @@ declare global {
       // Contacts
       contacts: {
         create: (data: any) => Promise<any>;
-        getAll: (type?: string) => Promise<any>;
+        getAll: (params?: { type?: 'customer' | 'supplier'; page?: number; limit?: number; search?: string } | string) => Promise<any>;
         update: (id: number, data: any) => Promise<any>;
         delete: (id: number) => Promise<any>;
         getLedger: (contactId: number) => Promise<any>;
@@ -81,7 +81,7 @@ declare global {
         receiveMoney: (data: any) => Promise<any>;
         payMoney: (data: any) => Promise<any>;
         void: (data: { transactionId: number; reason: string }) => Promise<any>;
-        getAll: (filters?: any) => Promise<any>;
+        getAll: (filters?: { type?: string; startDate?: string; endDate?: string; contactId?: number; limit?: number; page?: number; search?: string }) => Promise<any>;
         transfer: (data: any) => Promise<any>;
         getInvoiceData: (transactionId: number) => Promise<any>;
         export: (filters?: any) => Promise<any>;

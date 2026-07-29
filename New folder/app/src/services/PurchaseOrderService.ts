@@ -15,10 +15,12 @@ import { AutomationService } from './AutomationService';
 
 export class PurchaseOrderService {
   private db: Database.Database;
+  private dbManager: DatabaseManager;
   private engine: AccountingEngineService;
   private automation: AutomationService;
 
   constructor(dbManager: DatabaseManager) {
+    this.dbManager = dbManager;
     this.db = dbManager.getDatabase();
     this.engine = new AccountingEngineService(dbManager);
     this.automation = new AutomationService(dbManager);
@@ -50,45 +52,51 @@ export class PurchaseOrderService {
       }
 
       const poNo = this.generatePONo();
-      let subtotal = 0;
-      let gstAmount = 0;
 
-      const result = this.db.prepare(`
-        INSERT INTO purchase_orders (po_no, supplier_id, date, expected_date, notes, tax_type)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).run(poNo, data.supplierId, data.date, data.expectedDate || null, data.notes || null, data.taxType || 'standard');
+      // BUG FIX: wrap the whole create (PO row + line items + totals) in a
+      // transaction. Previously a failure part-way through the item loop left a
+      // partial purchase order with some lines and a zero/incorrect total.
+      return this.dbManager.safeTransaction(() => {
+        let subtotal = 0;
+        let gstAmount = 0;
 
-      const poId = result.lastInsertRowid as number;
+        const result = this.db.prepare(`
+          INSERT INTO purchase_orders (po_no, supplier_id, date, expected_date, notes, tax_type)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(poNo, data.supplierId, data.date, data.expectedDate || null, data.notes || null, data.taxType || 'standard');
 
-      const insertItem = this.db.prepare(`
-        INSERT INTO purchase_order_items (po_id, item_id, quantity, unit_price, gst_rate, gst_amount, total_amount, selling_price)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `);
+        const poId = result.lastInsertRowid as number;
 
-      for (const item of data.items) {
-        // Get item details from database to get correct GST rate
-        const itemDetails = this.db.prepare('SELECT gst_rate, gst_applicable FROM items WHERE id = ?').get(item.itemId) as any;
+        const insertItem = this.db.prepare(`
+          INSERT INTO purchase_order_items (po_id, item_id, quantity, unit_price, gst_rate, gst_amount, total_amount, selling_price)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `);
 
-        // Use item's GST rate from database, or fallback to provided rate, then to 5.0
-        const gstRate = itemDetails?.gst_applicable
-          ? (item.gstRate ?? itemDetails?.gst_rate ?? 5.0)
-          : 0;
+        for (const item of data.items) {
+          // Get item details from database to get correct GST rate
+          const itemDetails = this.db.prepare('SELECT gst_rate, gst_applicable FROM items WHERE id = ?').get(item.itemId) as any;
 
-        const lineTotal = round2(item.quantity * item.unitPrice);
-        const lineGst = round2(lineTotal * gstRate / 100);
-        const lineTotalWithGst = round2(lineTotal + lineGst);
-        subtotal = round2(subtotal + lineTotal);
-        gstAmount = round2(gstAmount + lineGst);
+          // Use item's GST rate from database, or fallback to provided rate, then to 5.0
+          const gstRate = itemDetails?.gst_applicable
+            ? (item.gstRate ?? itemDetails?.gst_rate ?? 5.0)
+            : 0;
 
-        insertItem.run(poId, item.itemId, item.quantity, item.unitPrice, gstRate, lineGst, lineTotalWithGst, item.sellingPrice || 0);
-      }
+          const lineTotal = round2(item.quantity * item.unitPrice);
+          const lineGst = round2(lineTotal * gstRate / 100);
+          const lineTotalWithGst = round2(lineTotal + lineGst);
+          subtotal = round2(subtotal + lineTotal);
+          gstAmount = round2(gstAmount + lineGst);
 
-      this.db.prepare(`
-        UPDATE purchase_orders SET subtotal = ?, gst_amount = ?, total_amount = ?
-        WHERE id = ?
-      `).run(subtotal, gstAmount, round2(subtotal + gstAmount), poId);
+          insertItem.run(poId, item.itemId, item.quantity, item.unitPrice, gstRate, lineGst, lineTotalWithGst, item.sellingPrice || 0);
+        }
 
-      return { success: true, message: 'Purchase order created', data: { id: poId } };
+        this.db.prepare(`
+          UPDATE purchase_orders SET subtotal = ?, gst_amount = ?, total_amount = ?
+          WHERE id = ?
+        `).run(subtotal, gstAmount, round2(subtotal + gstAmount), poId);
+
+        return { success: true, message: 'Purchase order created', data: { id: poId } };
+      });
     } catch (error: any) {
       return { success: false, message: 'Failed to create PO: ' + error.message };
     }
@@ -263,7 +271,7 @@ export class PurchaseOrderService {
           }
         };
 
-        // 2. Execute via Accounting Engine
+        // 2. Execute via Accounting Engine (posts the purchase journal + invoice atomically)
         const engineResult = this.engine.executePipeline(event);
         if (!engineResult.success) {
           return { success: false, message: 'Accounting update failed: ' + engineResult.message };
@@ -271,59 +279,66 @@ export class PurchaseOrderService {
 
         const transactionId = engineResult.data.transactionId;
 
-        // 3. Update Inventory stock quantities ONLY (no accounting — already handled by engine above)
-        // Using direct DB updates to avoid double-posting transactions and corrupting average_cost
-        for (const item of po.items) {
-          const currentItem = this.db.prepare('SELECT quantity_in_stock, average_cost FROM items WHERE id = ?').get(item.itemId) as any;
-          if (!currentItem) continue;
+        // 3. Update stock quantities, record movements, and mark the PO received —
+        //    all in ONE transaction. The engine already committed its journal in
+        //    its own transaction, so if THIS block fails we void that transaction
+        //    to avoid a posted purchase journal with no corresponding stock receipt.
+        try {
+          this.dbManager.safeTransaction(() => {
+            for (const item of po.items) {
+              const currentItem = this.db.prepare('SELECT quantity_in_stock, average_cost FROM items WHERE id = ?').get(item.itemId) as any;
+              if (!currentItem) continue;
 
-          const currentQty = currentItem.quantity_in_stock;
-          const currentAvgCost = currentItem.average_cost;
-          const newQty = item.quantity;
-          const newCost = item.unitPrice;
+              const currentQty = currentItem.quantity_in_stock;
+              const currentAvgCost = currentItem.average_cost;
+              const newQty = item.quantity;
+              const newCost = item.unitPrice;
 
-          // Recalculate weighted average cost
-          // BUG-A02 FIX: Clamp currentQty to 0 so negative stock (oversell) doesn't corrupt WAC
-          const effectiveQty = Math.max(0, currentQty);
-          const newAverageCost = (effectiveQty + newQty) > 0
-            ? ((effectiveQty * currentAvgCost) + (newQty * newCost)) / (effectiveQty + newQty)
-            : newCost;
+              // Recalculate weighted average cost (clamp currentQty to 0 so
+              // negative stock / oversell doesn't corrupt the WAC).
+              const effectiveQty = Math.max(0, currentQty);
+              const newAverageCost = (effectiveQty + newQty) > 0
+                ? ((effectiveQty * currentAvgCost) + (newQty * newCost)) / (effectiveQty + newQty)
+                : newCost;
 
-          // Update stock quantity, average cost, and prices
-          if (item.sellingPrice && item.sellingPrice > 0) {
+              if (item.sellingPrice && item.sellingPrice > 0) {
+                this.db.prepare(`
+                  UPDATE items
+                  SET quantity_in_stock = quantity_in_stock + ?, average_cost = ?, purchase_price = ?, selling_price = ?, updated_at = CURRENT_TIMESTAMP
+                  WHERE id = ?
+                `).run(newQty, newAverageCost, newCost, item.sellingPrice, item.itemId);
+              } else {
+                this.db.prepare(`
+                  UPDATE items
+                  SET quantity_in_stock = quantity_in_stock + ?, average_cost = ?, purchase_price = ?, updated_at = CURRENT_TIMESTAMP
+                  WHERE id = ?
+                `).run(newQty, newAverageCost, newCost, item.itemId);
+              }
+
+              // Record stock movement with transaction_id so handleVoid() can reverse it
+              this.db.prepare(`
+                INSERT INTO stock_movements (item_id, transaction_id, type, quantity, unit_cost, total_cost, reference, notes)
+                VALUES (?, ?, 'in', ?, ?, ?, ?, ?)
+              `).run(item.itemId, transactionId, newQty, newCost, newQty * newCost, po.poNo, `Received from PO ${po.poNo}`);
+            }
+
+            // 4. Update PO record with transaction id (inside the same transaction)
             this.db.prepare(`
-              UPDATE items
-              SET quantity_in_stock = quantity_in_stock + ?,
-                  average_cost = ?,
-                  purchase_price = ?,
-                  selling_price = ?,
-                  updated_at = CURRENT_TIMESTAMP
+              UPDATE purchase_orders 
+              SET status = ?, transaction_id = ?, updated_at = CURRENT_TIMESTAMP 
               WHERE id = ?
-            `).run(newQty, newAverageCost, newCost, item.sellingPrice, item.itemId);
-          } else {
-            this.db.prepare(`
-              UPDATE items
-              SET quantity_in_stock = quantity_in_stock + ?,
-                  average_cost = ?,
-                  purchase_price = ?,
-                  updated_at = CURRENT_TIMESTAMP
-              WHERE id = ?
-            `).run(newQty, newAverageCost, newCost, item.itemId);
+            `).run(status, transactionId, id);
+          });
+        } catch (postEngineError: any) {
+          // Compensation: void the committed purchase transaction so we never have
+          // a journal without its stock receipt.
+          try {
+            this.automation.handleVoid(transactionId, userId, 'PO receive post-processing failure: ' + (postEngineError?.message || 'unknown'));
+          } catch (voidErr) {
+            console.error('[PO] Compensation void failed:', voidErr);
           }
-
-          // Record stock movement with transaction_id so handleVoid() can find and reverse it
-          this.db.prepare(`
-            INSERT INTO stock_movements (item_id, transaction_id, type, quantity, unit_cost, total_cost, reference, notes)
-            VALUES (?, ?, 'in', ?, ?, ?, ?, ?)
-          `).run(item.itemId, transactionId, newQty, newCost, newQty * newCost, po.poNo, `Received from PO ${po.poNo}`);
+          throw postEngineError;
         }
-
-        // 4. Update PO record with transaction id
-        this.db.prepare(`
-          UPDATE purchase_orders 
-          SET status = ?, transaction_id = ?, updated_at = CURRENT_TIMESTAMP 
-          WHERE id = ?
-        `).run(status, transactionId, id);
 
         return { success: true, message: 'Purchase order received and ledger updated' };
       }
@@ -339,8 +354,12 @@ export class PurchaseOrderService {
 
   delete(id: number): ApiResponse {
     try {
-      this.db.prepare('DELETE FROM purchase_order_items WHERE po_id = ?').run(id);
-      this.db.prepare('DELETE FROM purchase_orders WHERE id = ?').run(id);
+      // BUG FIX: delete items + PO atomically so a failure can't leave a PO with
+      // no line items (or orphaned items).
+      this.dbManager.safeTransaction(() => {
+        this.db.prepare('DELETE FROM purchase_order_items WHERE po_id = ?').run(id);
+        this.db.prepare('DELETE FROM purchase_orders WHERE id = ?').run(id);
+      });
       return { success: true, message: 'Purchase order deleted' };
     } catch (error: any) {
       return { success: false, message: 'Failed to delete PO: ' + error.message };

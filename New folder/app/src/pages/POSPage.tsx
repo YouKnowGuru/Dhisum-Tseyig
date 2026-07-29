@@ -626,21 +626,35 @@ export function POSPage() {
       return;
     }
     try {
-      const result = await window.electronSecureAPI.emailInvoice?.send({
+      const payload = printData ? {
+        ...printData,
         customerEmail: emailInvoiceData.customerEmail,
-        invoiceNo: printData?.invoiceNo || '',
-        totalAmount: printData?.totalAmount || 0,
-        businessName: emailInvoiceData.businessName || printData?.businessName || 'Jinda',
-      });
-      if (result?.success) {
+        businessName: emailInvoiceData.businessName || printData.businessName || 'Jinda',
+      } : {
+        customerEmail: emailInvoiceData.customerEmail,
+        invoiceNo: '',
+        totalAmount: 0,
+        businessName: emailInvoiceData.businessName || 'Jinda',
+        customerName: 'Customer',
+        date: new Date().toISOString().split('T')[0],
+        paymentMode: 'cash',
+        items: [],
+        subtotal: 0,
+        discountAmount: 0,
+        gstAmount: 0,
+      };
+
+      const result: any = await window.electronSecureAPI.emailInvoice?.send(payload);
+      const isSuccess = result?.success || (result?.ok !== false && result?.data?.success !== false);
+      if (isSuccess) {
         showNotification('Invoice email opened successfully', 'success');
         setShowEmailInvoice(false);
         setEmailInvoiceData({ customerEmail: '', businessName: '' });
       } else {
-        showNotification('Failed to send invoice email', 'error');
+        showNotification(result?.data?.error || result?.message || 'Failed to send invoice email', 'error');
       }
-    } catch {
-      showNotification('Failed to send invoice email', 'error');
+    } catch (error: any) {
+      showNotification(error?.message || 'Failed to send invoice email', 'error');
     }
   };
 

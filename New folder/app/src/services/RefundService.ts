@@ -24,11 +24,22 @@ export class RefundService {
   generateRefundNo(): string {
     // Use MAX of the numeric suffix rather than COUNT+1 so that deletions
     // don't cause the next number to collide with an existing refund_no.
+    // Probe for a free slot and, on the rare collision, fall back to a
+    // random-suffixed number so a concurrent insert can't produce a
+    // duplicate (which would otherwise abort the whole refund via UNIQUE).
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const crypto = require('crypto');
     const maxRow = this.db.prepare(
       "SELECT MAX(CAST(SUBSTR(refund_no, 4) AS INTEGER)) as max_num FROM refunds WHERE refund_no LIKE 'RF-%'"
     ).get() as any;
-    const num = (maxRow?.max_num || 0) + 1;
-    return `RF-${String(num).padStart(5, '0')}`;
+    const base = (maxRow?.max_num || 0) + 1;
+    const checkExisting = this.db.prepare('SELECT 1 FROM refunds WHERE refund_no = ?');
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const candidate = `RF-${String(base + attempt).padStart(5, '0')}`;
+      if (!checkExisting.get(candidate)) return candidate;
+    }
+    // Last-ditch: random suffix guarantees uniqueness.
+    return `RF-${String(base).padStart(5, '0')}-${crypto.randomInt(0, 10000).toString().padStart(4, '0')}`;
   }
 
   create(data: CreateRefundData): ApiResponse<{ id: number }> {
@@ -37,21 +48,43 @@ export class RefundService {
         return { success: false, message: 'No items in refund' };
       }
 
-      // 1. Calculate totals.
-      // Where possible, retrieve the ORIGINAL sale's discount so the refund
-      // reverses the exact GST that was collected on the discounted sale (BUG 24).
-      // Falls back to undiscounted calculation if the original invoice can't be found.
-      let originalDiscountAmount = 0;
-      let originalSubtotal = 0;
-      try {
-        const origInvoice = this.db.prepare(
-          'SELECT discount_amount, subtotal FROM invoices WHERE transaction_id = ?'
-        ).get(data.originalTransactionId) as any;
-        if (origInvoice) {
-          originalDiscountAmount = Number(origInvoice.discount_amount) || 0;
-          originalSubtotal = Number(origInvoice.subtotal) || 0;
+      // ------------------------------------------------------------------
+      // 1. Pull the ORIGINAL sale's per-line data (GST rate + cost) so the
+      // refund reverses EXACTLY what was charged — not the item's current
+      // (possibly changed) GST rate or average cost.
+      // ------------------------------------------------------------------
+      const origInvoice = this.db.prepare(
+        'SELECT id, discount_amount, subtotal, tax_type FROM invoices WHERE transaction_id = ?'
+      ).get(data.originalTransactionId) as any;
+
+      // Original invoice items keyed by item_id: the authoritative GST rate per line.
+      const origInvoiceItems = new Map<number, { gst_rate: number; gst_applicable: number; unit_price: number }>();
+      if (origInvoice) {
+        const rows = this.db.prepare(`
+          SELECT ii.item_id, ii.gst_rate, ii.unit_price,
+                 COALESCE(i.gst_applicable, 1) as gst_applicable
+          FROM invoice_items ii
+          LEFT JOIN items i ON i.id = ii.item_id
+          WHERE ii.invoice_id = ?
+        `).all(origInvoice.id) as any[];
+        for (const r of rows) {
+          origInvoiceItems.set(r.item_id, { gst_rate: Number(r.gst_rate) || 0, gst_applicable: r.gst_applicable, unit_price: Number(r.unit_price) || 0 });
         }
-      } catch { /* ignore — fall back to undiscounted GST */ }
+      }
+
+      // Original COGS per item from the sale's stock_movements (out) unit_cost.
+      const origCogsCost = new Map<number, number>();
+      const movRows = this.db.prepare(
+        "SELECT item_id, unit_cost FROM stock_movements WHERE transaction_id = ? AND type = 'out'"
+      ).all(data.originalTransactionId) as any[];
+      for (const m of movRows) {
+        // Prefer the last recorded cost if multiple movements exist for the item.
+        origCogsCost.set(m.item_id, Number(m.unit_cost) || 0);
+      }
+
+      const originalDiscountAmount = origInvoice ? Number(origInvoice.discount_amount) || 0 : 0;
+      const originalSubtotal = origInvoice ? Number(origInvoice.subtotal) || 0 : 0;
+      const originalTaxType = origInvoice?.tax_type || 'standard';
 
       const refundNo = this.generateRefundNo();
       let subtotal = 0;
@@ -62,18 +95,25 @@ export class RefundService {
       // computed on the same discounted amount the customer paid originally.
       const originalDiscountFactor = originalSubtotal > 0 ? (originalSubtotal - originalDiscountAmount) / originalSubtotal : 1;
 
+      // Resolve each refund line's GST rate: prefer the ORIGINAL invoice line
+      // rate; fall back to the current item rate only when the original invoice
+      // can't be found (legacy sales without invoice_items).
+      const resolvedGstRate = new Map<number, number>();
       for (const item of data.items) {
-        // Get item details from database to get correct GST rate
+        const orig = origInvoiceItems.get(item.itemId);
         const itemDetails = this.db.prepare('SELECT gst_rate, gst_applicable FROM items WHERE id = ?').get(item.itemId) as any;
+        let rate: number;
+        if (orig) {
+          rate = orig.gst_applicable ? orig.gst_rate : 0;
+        } else {
+          rate = itemDetails?.gst_applicable ? (item.gstRate ?? itemDetails?.gst_rate ?? 5.0) : 0;
+        }
+        resolvedGstRate.set(item.itemId, rate);
+      }
 
-        // Use item's GST rate from database, or fallback to provided rate, then to 5.0
-        const gstRate = itemDetails?.gst_applicable
-          ? (item.gstRate ?? itemDetails?.gst_rate ?? 5.0)
-          : 0;
-
+      for (const item of data.items) {
+        const gstRate = resolvedGstRate.get(item.itemId) || 0;
         const lineTotal = item.quantity * item.unitPrice;
-        // Apply the original sale's discount proportionally so the reversed
-        // GST matches what was actually charged (BUG 24).
         const discountedLineTotal = lineTotal * originalDiscountFactor;
         const lineGst = Number((discountedLineTotal * gstRate / 100).toFixed(2));
         subtotal += lineTotal;
@@ -82,17 +122,17 @@ export class RefundService {
       }
 
       const refundDiscountAmount = Number((subtotal - discountedSubtotal).toFixed(2));
-      // Derive netAmount from subtotal + totalGst - refundDiscountAmount (NOT
-      // discountedSubtotal + totalGst) so that debit total (subtotal + totalGst)
-      // always equals credit total (refundDiscountAmount + netAmount) exactly,
-      // avoiding validateBalance epsilon failures from independent rounding.
+      // Derive netAmount so debit total (subtotal + totalGst) always equals
+      // credit total (refundDiscountAmount + netAmount) exactly.
       const netAmount = subtotal + totalGst - refundDiscountAmount;
 
-      // 2. Prepare Accounting Engine Event
+      // ------------------------------------------------------------------
+      // 2. Build the balanced journal lines.
+      // ------------------------------------------------------------------
       const mapping = this.automation.mapAccounts('refund', data.refundMode || 'cash');
       const lines: EngineTransactionLine[] = [];
 
-      // Debit Sales Revenue (Reducing it)
+      // Debit Sales Revenue (reduce it) by the pre-discount subtotal
       lines.push({
         accountId: mapping.debitAccount,
         description: `Refund - ${data.reason || 'Returns'}`,
@@ -100,71 +140,50 @@ export class RefundService {
         creditAmount: 0
       });
 
-      // Debit GST Output (Reducing it) — negative gstAmount so saveGstEntries inserts a
-      // negative row in gst_entries, correctly reducing the month's GST Output total.
+      // Debit GST Output (reduce it) — negative gstAmount reduces the month's total.
       if (totalGst > 0) {
         lines.push({
           accountId: this.automation.getGstAccount(),
           description: 'GST Output Reversal',
           debitAmount: totalGst,
           creditAmount: 0,
-          gstAmount: -totalGst,   // Negative = reversal/reduction
+          gstAmount: -totalGst,
           gstType: 'output'
         });
       }
 
-      // Reversal of COGS (Debit Inventory, Credit COGS).
-      // Gate on average_cost presence only — COGS is unrelated to GST, so a
-      // non-GST-applicable item that carried COGS on the sale must also have
-      // that COGS reversed on refund (BUG 23).
+      // Reverse COGS at the ORIGINAL sale's cost (Dr Inventory / Cr COGS).
       let totalCogs = 0;
       for (const item of data.items) {
+        const origCost = origCogsCost.get(item.itemId);
         const itemDetails = this.db.prepare('SELECT average_cost FROM items WHERE id = ?').get(item.itemId) as any;
-        const avgCost = itemDetails ? Number(itemDetails.average_cost) : 0;
-        if (avgCost > 0) {
-          totalCogs += (avgCost * item.quantity);
-        }
+        // Prefer original sale cost; fall back to current average cost.
+        const cost = (origCost !== undefined && origCost > 0)
+          ? origCost
+          : (itemDetails ? Number(itemDetails.average_cost) || 0 : 0);
+        if (cost > 0) totalCogs += cost * item.quantity;
       }
+      totalCogs = Number(totalCogs.toFixed(2));
 
       if (totalCogs > 0) {
-        const cogsAccount = this.db.prepare("SELECT id FROM accounts WHERE code = '5000' OR subtype = 'cogs' LIMIT 1").get() as any;
-        const inventoryAccount = this.db.prepare("SELECT id FROM accounts WHERE code = '1400' OR subtype = 'current_asset' AND name LIKE '%Inventory%' LIMIT 1").get() as any;
-
+        const cogsAccount = this.db.prepare("SELECT id FROM accounts WHERE code = '5000' LIMIT 1").get() as any;
+        const inventoryAccount = this.db.prepare("SELECT id FROM accounts WHERE code = '1400' LIMIT 1").get() as any;
         if (cogsAccount && inventoryAccount) {
-          // Debit Inventory (Increase stock value)
-          lines.push({
-            accountId: inventoryAccount.id,
-            description: `Inventory Restocked: ${refundNo}`,
-            debitAmount: totalCogs,
-            creditAmount: 0
-          });
-          // Credit COGS (Decrease expense)
-          lines.push({
-            accountId: cogsAccount.id,
-            description: `COGS Reversal: ${refundNo}`,
-            debitAmount: 0,
-            creditAmount: totalCogs
-          });
+          lines.push({ accountId: inventoryAccount.id, description: `Inventory Restocked: ${refundNo}`, debitAmount: totalCogs, creditAmount: 0 });
+          lines.push({ accountId: cogsAccount.id, description: `COGS Reversal: ${refundNo}`, debitAmount: 0, creditAmount: totalCogs });
         }
       }
 
-      // Reverse the original sale's Discount Allowed so the refund credits
-      // back only the cash the customer actually paid (discountedSubtotal +
-      // GST), not the full pre-discount subtotal. Without this, a discounted
-      // sale + refund over-pays the customer by exactly the discount amount.
+      // Credit back the original Discount Allowed so the customer is refunded
+      // only what they actually paid (discounted amount + GST).
       if (refundDiscountAmount > 0) {
-        const discountAccount = this.db.prepare("SELECT id FROM accounts WHERE code = '6400' OR subtype = 'other_expense' LIMIT 1").get() as any;
+        const discountAccount = this.db.prepare("SELECT id FROM accounts WHERE code = '6400' LIMIT 1").get() as any;
         if (discountAccount) {
-          lines.push({
-            accountId: discountAccount.id,
-            description: `Discount Allowed Reversal: ${refundNo}`,
-            debitAmount: 0,
-            creditAmount: refundDiscountAmount
-          });
+          lines.push({ accountId: discountAccount.id, description: `Discount Allowed Reversal: ${refundNo}`, debitAmount: 0, creditAmount: refundDiscountAmount });
         }
       }
 
-      // Credit Cash/Bank/Customer (Paying them back)
+      // Credit Cash/Bank/Customer (pay them back)
       lines.push({
         accountId: mapping.creditAccount,
         contactId: data.refundMode === 'credit' ? data.customerId : null,
@@ -173,27 +192,19 @@ export class RefundService {
         creditAmount: netAmount
       });
 
-      // Look up the original invoice (via transaction_id) to get its taxType for consistent GST reporting
-      // Note: tax_type lives on the invoices table, not transactions.
-      const originalTx = this.db.prepare(
-        'SELECT i.tax_type FROM invoices i WHERE i.transaction_id = ?'
-      ).get(data.originalTransactionId) as any;
-      const originalTaxType = originalTx?.tax_type || 'standard';
-
-      // Engine `items` is used for stock_movements and invoice_items generation.
-      // Apply the same per-line discount factor used for the accounting lines
-      // so invoice_items.total_amount matches the actual reversed GST-inclusive
-      // amount the customer received back. Stock movements keep the discounted
-      // unit price to reflect the cost basis of the items actually returned.
+      // Engine items: used for the stock-restore movements (type 'in'). The
+      // refund record itself (refunds/refund_items) is the source of truth for
+      // the reversal — the engine does NOT create an invoice for type 'refund'.
       const eventItems: EngineItem[] = data.items.map(i => {
+        const rate = resolvedGstRate.get(i.itemId) || 0;
         const lineTotal = i.quantity * i.unitPrice;
         const discountedLineTotal = Number((lineTotal * originalDiscountFactor).toFixed(2));
-        const lineGst = Number((discountedLineTotal * (i.gstRate || 0) / 100).toFixed(2));
+        const lineGst = Number((discountedLineTotal * rate / 100).toFixed(2));
         return {
           itemId: i.itemId,
           quantity: i.quantity,
           unitPrice: i.unitPrice,
-          gstRate: i.gstRate || 0,
+          gstRate: rate,
           gstAmount: lineGst,
           totalAmount: discountedLineTotal + lineGst,
           isStockApplicable: true,
@@ -201,8 +212,16 @@ export class RefundService {
         };
       });
 
+      // ------------------------------------------------------------------
+      // 3. Execute atomically: journal + GST entries + stock restore + the
+      // refunds/refund_items records ALL inside the engine's single transaction
+      // (via the extraWrites hook). Any failure rolls the whole thing back —
+      // no more committed journal without a refund record, and no userId:0
+      // compensation path.
+      // ------------------------------------------------------------------
+      let refundId = 0;
       const event: EngineEvent = {
-        type: 'adjustment', // DB CHECK: must be one of sale|purchase|receipt|payment|transfer|adjustment|journal
+        type: 'refund',
         date: data.date,
         contactId: data.customerId,
         description: data.reason || `Refund for TXN #${data.originalTransactionId}`,
@@ -213,40 +232,8 @@ export class RefundService {
         discountAmount: refundDiscountAmount,
         netAmount,
         lines,
-        taxType: originalTaxType
-      };
-
-      // 3. Execute in Atomic Transaction
-      const result = this.engine.executePipeline(event);
-
-      if (!result.success) {
-        return { success: false, message: 'Accounting Engine Failed: ' + result.message };
-      }
-
-      const transactionId = result.data.transactionId;
-
-      // 3. Execute stock restoration + refund record atomically.
-      // The engine pipeline already committed its own transaction, so if this
-      // block fails we must void the transaction to avoid orphaned accounting
-      // entries. Everything in this block runs inside a single DB transaction.
-      let refundId: number;
-      try {
-        refundId = this.dbManager.safeTransaction(() => {
-          // BUG FIX: Restore stock for refunded items.
-          // The engine uses type 'adjustment' (required by DB CHECK constraint),
-          // which skips stock movements. We restore stock directly here.
-          const updateStock = this.db.prepare('UPDATE items SET quantity_in_stock = quantity_in_stock + ? WHERE id = ?');
-          const insertMovement = this.db.prepare(
-            `INSERT INTO stock_movements (item_id, transaction_id, type, quantity, unit_cost, total_cost, reference)
-             VALUES (?, ?, 'in', ?, ?, ?, ?)`
-          );
-          for (const item of data.items) {
-            const itemDetails = this.db.prepare('SELECT average_cost FROM items WHERE id = ?').get(item.itemId) as any;
-            const avgCost = itemDetails ? Number(itemDetails.average_cost) || 0 : 0;
-            updateStock.run(item.quantity, item.itemId);
-            insertMovement.run(item.itemId, transactionId, item.quantity, avgCost, avgCost * item.quantity, `Refund ${refundNo}`);
-          }
-
+        taxType: originalTaxType,
+        extraWrites: (transactionId) => {
           const refundResult = this.db.prepare(`
             INSERT INTO refunds (refund_no, original_transaction_id, customer_id, transaction_id, date, reason, refund_mode, subtotal, gst_amount, total_amount, notes)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -263,37 +250,34 @@ export class RefundService {
             netAmount,
             data.notes || null
           );
-
-          const newRefundId = refundResult.lastInsertRowid as number;
+          refundId = refundResult.lastInsertRowid as number;
 
           const insertItem = this.db.prepare(`
             INSERT INTO refund_items (refund_id, item_id, quantity, unit_price, gst_rate, total_amount)
             VALUES (?, ?, ?, ?, ?, ?)
           `);
-
           for (const item of data.items) {
-            const gstRate = item.gstRate ?? 5.0;
+            const rate = resolvedGstRate.get(item.itemId) ?? 0;
             const lineTotal = item.quantity * item.unitPrice;
             const discountedTotal = lineTotal * originalDiscountFactor;
-            const lineGst = Number((discountedTotal * gstRate / 100).toFixed(2));
+            const lineGst = Number((discountedTotal * rate / 100).toFixed(2));
             const total = Number((discountedTotal + lineGst).toFixed(2));
-            insertItem.run(newRefundId, item.itemId, item.quantity, item.unitPrice, gstRate, total);
+            insertItem.run(refundId, item.itemId, item.quantity, item.unitPrice, rate, total);
           }
+        }
+      };
 
-          return newRefundId;
-        });
-      } catch (postEngineError: any) {
-        // Post-engine operations failed. Void the committed transaction to
-        // prevent orphaned accounting entries with no refund record.
-        this.automation.handleVoid(transactionId, 0, 'Refund post-processing failure: ' + (postEngineError?.message || 'unknown'));
-        throw postEngineError;
+      const result = this.engine.executePipeline(event);
+
+      if (!result.success) {
+        return { success: false, message: 'Accounting Engine Failed: ' + result.message };
       }
 
       this.audit.logAction({
         action: 'REFUND_CREATE',
         entityType: 'refunds',
         entityId: refundId,
-        newValues: { refundNo, originalTransactionId: data.originalTransactionId, customerId: data.customerId, transactionId, refundMode: data.refundMode, subtotal, gstAmount: totalGst, totalAmount: netAmount, reason: data.reason }
+        newValues: { refundNo, originalTransactionId: data.originalTransactionId, customerId: data.customerId, transactionId: result.data.transactionId, refundMode: data.refundMode, subtotal, gstAmount: totalGst, totalAmount: netAmount, reason: data.reason }
       });
 
       return { success: true, message: 'Refund completed successfully', data: { id: refundId } };

@@ -1,6 +1,7 @@
 import { DatabaseManager } from '../database/DatabaseManager';
 import Database from 'better-sqlite3';
-import { format } from 'date-fns';
+import { format, parseISO, isAfter } from 'date-fns';
+import { roundMoney, toCents, fromCents } from '../utils/money';
 import type {
   Item,
   CreateItemData,
@@ -142,11 +143,42 @@ export class InventoryService {
 
   getAllItems(): Item[] {
     try {
-      const items = this.db.prepare('SELECT * FROM items WHERE is_active = 1 ORDER BY name').all();
+      // Cap at 500 for dropdown/picker usage — use getItemsPaginated for full table views
+      const items = this.db.prepare('SELECT * FROM items WHERE is_active = 1 ORDER BY name LIMIT 500').all();
       return items.map((i: any) => this.mapItemFromDb(i));
     } catch (error) {
       console.error('Get all items error:', error);
       return [];
+    }
+  }
+
+  getItemsPaginated(page: number = 1, limit: number = 50, search: string = ''): { items: Item[]; total: number } {
+    try {
+      const offset = (page - 1) * limit;
+      const safeLimit = Math.min(Math.max(1, limit), 200);
+
+      if (search && search.trim()) {
+        const pattern = `%${search.trim()}%`;
+        const total = (this.db.prepare(`
+          SELECT COUNT(*) AS cnt FROM items
+          WHERE is_active = 1 AND (name LIKE ? OR code LIKE ? OR category LIKE ?)
+        `).get(pattern, pattern, pattern) as any).cnt;
+        const items = this.db.prepare(`
+          SELECT * FROM items
+          WHERE is_active = 1 AND (name LIKE ? OR code LIKE ? OR category LIKE ?)
+          ORDER BY name LIMIT ? OFFSET ?
+        `).all(pattern, pattern, pattern, safeLimit, offset);
+        return { items: items.map((i: any) => this.mapItemFromDb(i)), total };
+      }
+
+      const total = (this.db.prepare(`SELECT COUNT(*) AS cnt FROM items WHERE is_active = 1`).get() as any).cnt;
+      const items = this.db.prepare(`
+        SELECT * FROM items WHERE is_active = 1 ORDER BY name LIMIT ? OFFSET ?
+      `).all(safeLimit, offset);
+      return { items: items.map((i: any) => this.mapItemFromDb(i)), total };
+    } catch (error) {
+      console.error('Get items paginated error:', error);
+      return { items: [], total: 0 };
     }
   }
 
@@ -475,9 +507,31 @@ export class InventoryService {
           throw new Error('Invalid stock calculation result (NaN).');
         }
 
-        const txDate = format(new Date(), 'yyyy-MM-dd');
-        const txMonth = new Date().getMonth() + 1;
-        const txYear = new Date().getFullYear();
+        // Honor an optional supplied posting date (validated, not future, and
+        // not in a locked period). GST month/year are derived from THIS date so
+        // a backdated purchase files its GST input in the correct period.
+        let txDate = format(new Date(), 'yyyy-MM-dd');
+        if (data.date) {
+          const parsed = parseISO(data.date);
+          if (isNaN(parsed.getTime())) {
+            throw new Error(`Invalid purchase date: ${data.date}`);
+          }
+          const endOfToday = new Date();
+          endOfToday.setHours(23, 59, 59, 999);
+          if (isAfter(parsed, endOfToday)) {
+            throw new Error('Purchase date cannot be in the future.');
+          }
+          const lock = this.db.prepare(
+            'SELECT 1 FROM period_locks WHERE year = ? AND month = ? AND is_locked = 1'
+          ).get(parsed.getFullYear(), parsed.getMonth() + 1);
+          if (lock) {
+            throw new Error('Period Lock: Cannot post a purchase into a locked period.');
+          }
+          txDate = format(parsed, 'yyyy-MM-dd');
+        }
+        const txDateObj = parseISO(txDate);
+        const txMonth = txDateObj.getMonth() + 1;
+        const txYear = txDateObj.getFullYear();
 
         const transactionId = (this.db.prepare(`
           INSERT INTO transactions (transaction_no, type, date, reference, contact_id, description, total_amount, gst_amount, net_amount, payment_mode, status)
@@ -520,69 +574,132 @@ export class InventoryService {
         return { success: true, message: 'Stock added successfully' };
       } catch (error: any) {
         console.error('Add stock error:', error);
+        // Re-throwing is INTENTIONAL: it is what makes safeTransaction roll back
+        // the partially-written rows (item stock update, transaction row, GST
+        // entry) when the accounting validation fails. This guarantees an
+        // unbalanced/misconfigured purchase can never be partially committed.
+        // Callers that want a clean ApiResponse instead of a throw should use
+        // addStockSafe() below.
         throw error;
       }
     });
   }
 
+  /**
+   * Public wrapper that converts addStock's thrown validation errors into a
+   * clean ApiResponse, while preserving the atomic rollback that the throw
+   * provides. Use this from IPC handlers so the renderer gets success:false
+   * instead of an unhandled rejection.
+   */
+  addStockSafe(data: AddStockData): ApiResponse {
+    try {
+      return this.addStock(data);
+    } catch (error: any) {
+      return { success: false, message: error?.message || 'Failed to add stock' };
+    }
+  }
+
   adjustStock(itemId: number, quantity: number, reason: string, reference?: string): ApiResponse {
     try {
-      const item = this.getItemById(itemId);
+      // BUG FIX: the whole operation (transaction row + stock movement + item
+      // quantity + GL journal) must be atomic. Previously it ran with no
+      // transaction, so a mid-way failure left stock and the ledger inconsistent.
+      return this.dbManager.safeTransaction(() => {
+        const item = this.getItemById(itemId);
 
-      if (!item) {
-        return { success: false, message: 'Item not found' };
-      }
+        if (!item) {
+          return { success: false, message: 'Item not found' };
+        }
 
-      const currentQty = item.quantityInStock;
-      const newQty = currentQty + quantity;
+        const currentQty = item.quantityInStock;
+        const newQty = currentQty + quantity;
 
-      if (newQty < 0) {
-        return { success: false, message: 'Adjustment would result in negative stock' };
-      }
+        if (newQty < 0) {
+          return { success: false, message: 'Adjustment would result in negative stock' };
+        }
 
-      const transactionNo = this.generateTransactionNo('ADJ');
-      const date = format(new Date(), 'yyyy-MM-dd');
+        // Value of the adjustment at the item's current average cost. This is
+        // the amount that must be reflected in the Inventory GL so the stock
+        // valuation report equals the Inventory account balance (BUG: adjustStock
+        // used to post NO journal, so the two always drifted apart).
+        const adjustmentValue = Number((quantity * (item.averageCost || 0)).toFixed(2));
+        const absValue = Math.abs(adjustmentValue);
 
-      const transactionResult = this.db.prepare(`
-        INSERT INTO transactions(transaction_no, type, date, description, total_amount, net_amount, reference)
-        VALUES(?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        transactionNo,
-        'adjustment',
-        date,
-        `Stock Adjustment - ${item.name}: ${reason} `,
-        0,
-        0,
-        reference || null
-      );
+        const transactionNo = this.generateTransactionNo('ADJ');
+        const date = format(new Date(), 'yyyy-MM-dd');
 
-      const transactionId = transactionResult.lastInsertRowid as number;
+        const transactionResult = this.db.prepare(`
+          INSERT INTO transactions(transaction_no, type, date, description, total_amount, net_amount, reference)
+          VALUES(?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          transactionNo,
+          'adjustment',
+          date,
+          `Stock Adjustment - ${item.name}: ${reason} `,
+          absValue,
+          absValue,
+          reference || null
+        );
 
-      // Record stock movement
-      this.db.prepare(`
-        INSERT INTO stock_movements(item_id, transaction_id, type, quantity, unit_cost, total_cost, reference, notes)
-        VALUES(?, ?, 'adjustment', ?, ?, ?, ?, ?)
-      `).run(
-        itemId,
-        transactionId,
-        quantity,
-        item.averageCost,
-        quantity * item.averageCost,
-        reference || `Adjustment #${transactionNo} `,
-        reason
-      );
+        const transactionId = transactionResult.lastInsertRowid as number;
 
-      // Update item quantity
-      this.db.prepare('UPDATE items SET quantity_in_stock = ? WHERE id = ?').run(newQty, itemId);
+        // Record stock movement
+        this.db.prepare(`
+          INSERT INTO stock_movements(item_id, transaction_id, type, quantity, unit_cost, total_cost, reference, notes)
+          VALUES(?, ?, 'adjustment', ?, ?, ?, ?, ?)
+        `).run(
+          itemId,
+          transactionId,
+          quantity,
+          item.averageCost,
+          adjustmentValue,
+          reference || `Adjustment #${transactionNo} `,
+          reason
+        );
 
-      this.audit.logAction({
-        action: 'ADJUST_STOCK',
-        entityType: 'items',
-        entityId: itemId,
-        newValues: { adjustment: quantity, newTotal: newQty, reason }
+        // Post the balancing GL journal (only when there is a non-zero value).
+        if (absValue >= 0.005) {
+          const inventoryAccount = this.db.prepare("SELECT id FROM accounts WHERE code = '1400' LIMIT 1").get() as any;
+          if (!inventoryAccount) {
+            throw new Error("Accounting Error: Inventory account (1400) not found. Cannot post stock adjustment journal.");
+          }
+          // Stock Adjustment expense/income account. Prefer a dedicated 6500 if
+          // present, else fall back to Other Expenses (6400).
+          const adjAccount =
+            (this.db.prepare("SELECT id FROM accounts WHERE code = '6500' LIMIT 1").get() as any) ||
+            (this.db.prepare("SELECT id FROM accounts WHERE code = '6400' LIMIT 1").get() as any);
+          if (!adjAccount) {
+            throw new Error("Accounting Error: no stock-adjustment offset account (6500/6400) found.");
+          }
+
+          const insertLine = this.db.prepare(`
+            INSERT INTO transaction_lines(transaction_id, account_id, description, debit_amount, credit_amount)
+            VALUES(?, ?, ?, ?, ?)
+          `);
+
+          if (quantity > 0) {
+            // Stock increase: Dr Inventory / Cr adjustment gain
+            insertLine.run(transactionId, inventoryAccount.id, `Stock increase - ${item.name}`, absValue, 0);
+            insertLine.run(transactionId, adjAccount.id, `Stock adjustment gain - ${item.name}`, 0, absValue);
+          } else {
+            // Stock decrease (write-down): Dr adjustment loss / Cr Inventory
+            insertLine.run(transactionId, adjAccount.id, `Stock adjustment loss - ${item.name}`, absValue, 0);
+            insertLine.run(transactionId, inventoryAccount.id, `Stock decrease - ${item.name}`, 0, absValue);
+          }
+        }
+
+        // Update item quantity
+        this.db.prepare('UPDATE items SET quantity_in_stock = ? WHERE id = ?').run(newQty, itemId);
+
+        this.audit.logAction({
+          action: 'ADJUST_STOCK',
+          entityType: 'items',
+          entityId: itemId,
+          newValues: { adjustment: quantity, newTotal: newQty, reason }
+        });
+
+        return { success: true, message: 'Stock adjusted successfully' };
       });
-
-      return { success: true, message: 'Stock adjusted successfully' };
     } catch (error: any) {
       console.error('Adjust stock error:', error);
       return { success: false, message: 'Failed to adjust stock: ' + error.message };
@@ -674,6 +791,8 @@ export class InventoryService {
   private generateTransactionNo(type: string): string {
     const date = new Date();
     const year = date.getFullYear();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const crypto = require('crypto');
 
     const lastTransaction = this.db.prepare(`
       SELECT transaction_no FROM transactions 
@@ -687,7 +806,14 @@ export class InventoryService {
       sequence = parseInt(parts[2]) + 1;
     }
 
-    return `${type}-${year}-${sequence.toString().padStart(4, '0')}`;
+    // Probe for a free slot; on collision fall back to a random suffix so a
+    // concurrent insert can't produce a duplicate transaction_no.
+    const checkExisting = this.db.prepare('SELECT 1 FROM transactions WHERE transaction_no = ?');
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const candidate = `${type}-${year}-${(sequence + attempt).toString().padStart(4, '0')}`;
+      if (!checkExisting.get(candidate)) return candidate;
+    }
+    return `${type}-${year}-${sequence.toString().padStart(4, '0')}-${crypto.randomInt(0, 10000).toString().padStart(4, '0')}`;
   }
 
   private createPurchaseAccountingEntries(
@@ -697,44 +823,89 @@ export class InventoryService {
     purchaseCost: number,
     gstAmount: number
   ): void {
-    // 1. Debit: Inventory Account
-    const inventoryAccount = this.db.prepare("SELECT id FROM accounts WHERE code = '1400'").get();
-    if (inventoryAccount) {
-      this.db.prepare(`
-        INSERT INTO transaction_lines(transaction_id, account_id, description, debit_amount)
-        VALUES(?, ?, ?, ?)
-          `).run(transactionId, (inventoryAccount as any).id, 'Inventory Purchase', purchaseCost);
-    }
+    // BUG FIX (double-entry integrity): previously each posting was wrapped in
+    // `if (account)`, so a missing account silently shrank one side of the
+    // journal while the other posted in full — producing a permanently
+    // unbalanced transaction with no error. We now build the lines first,
+    // REQUIRE every account to exist (throw otherwise), and validate that
+    // debits === credits (compared in integer cents) before writing. Because
+    // addStock runs inside safeTransaction, a throw rolls back the whole purchase.
+    const requireAccount = (code: string, label: string): number => {
+      const acc = this.db.prepare('SELECT id FROM accounts WHERE code = ?').get(code) as any;
+      if (!acc) {
+        throw new Error(`Accounting Error: ${label} account (${code}) not found. Cannot post a balanced purchase journal.`);
+      }
+      return acc.id as number;
+    };
+
+    interface Line { accountId: number; contactId?: number | null; description: string; debit: number; credit: number; gstAmount?: number; gstType?: 'input' | 'output'; }
+    const lines: Line[] = [];
+
+    // 1. Debit: Inventory Account (purchase cost excl. GST)
+    lines.push({
+      accountId: requireAccount('1400', 'Inventory'),
+      description: 'Inventory Purchase',
+      debit: purchaseCost,
+      credit: 0
+    });
 
     // 2. Debit: GST Input (if applicable)
     if (gstAmount > 0) {
-      const gstAccount = this.db.prepare("SELECT id FROM accounts WHERE code = '1500'").get();
-      if (gstAccount) {
-        this.db.prepare(`
-          INSERT INTO transaction_lines(transaction_id, account_id, description, debit_amount, gst_amount, gst_type)
-        VALUES(?, ?, ?, ?, ?, ?)
-          `).run(transactionId, (gstAccount as any).id, 'GST Input', gstAmount, gstAmount, 'input');
-      }
+      lines.push({
+        accountId: requireAccount('1500', 'GST Input'),
+        description: 'GST Input',
+        debit: gstAmount,
+        credit: 0,
+        gstAmount,
+        gstType: 'input'
+      });
     }
 
-    // 3. Credit: Cash/Bank or Supplier Account
+    // 3. Credit: Cash/Bank or Supplier (Accounts Payable) — full total incl. GST
     if (data.paymentMode === 'credit' && data.supplierId) {
-      const supplier = this.db.prepare('SELECT account_id FROM contacts WHERE id = ?').get(data.supplierId);
-      if (supplier) {
-        this.db.prepare(`
-          INSERT INTO transaction_lines(transaction_id, account_id, contact_id, description, credit_amount)
-        VALUES(?, ?, ?, ?, ?)
-          `).run(transactionId, (supplier as any).account_id, data.supplierId, 'Purchase on Credit', totalAmount);
+      const supplier = this.db.prepare('SELECT account_id FROM contacts WHERE id = ?').get(data.supplierId) as any;
+      if (!supplier || !supplier.account_id) {
+        throw new Error(`Accounting Error: supplier ${data.supplierId} has no linked payable account. Cannot post credit purchase.`);
       }
+      lines.push({
+        accountId: supplier.account_id,
+        contactId: data.supplierId,
+        description: 'Purchase on Credit',
+        debit: 0,
+        credit: totalAmount
+      });
     } else {
       const paymentAccountCode = data.paymentMode === 'bank' ? '1200' : '1100';
-      const paymentAccount = this.db.prepare('SELECT id FROM accounts WHERE code = ?').get(paymentAccountCode);
-      if (paymentAccount) {
-        this.db.prepare(`
-          INSERT INTO transaction_lines(transaction_id, account_id, description, credit_amount)
-        VALUES(?, ?, ?, ?)
-        `).run(transactionId, (paymentAccount as any).id, `Purchase - ${data.paymentMode} `, totalAmount);
-      }
+      lines.push({
+        accountId: requireAccount(paymentAccountCode, 'Payment'),
+        description: `Purchase - ${data.paymentMode}`,
+        debit: 0,
+        credit: totalAmount
+      });
+    }
+
+    // Validate the journal balances (in integer cents) before writing anything.
+    const debitCents = lines.reduce((s, l) => s + toCents(l.debit), 0);
+    const creditCents = lines.reduce((s, l) => s + toCents(l.credit), 0);
+    if (debitCents !== creditCents) {
+      throw new Error(`Double Entry Rule: purchase journal not balanced. Debits: ${fromCents(debitCents).toFixed(2)}, Credits: ${fromCents(creditCents).toFixed(2)}`);
+    }
+
+    const insertLine = this.db.prepare(`
+      INSERT INTO transaction_lines(transaction_id, account_id, contact_id, description, debit_amount, credit_amount, gst_amount, gst_type)
+      VALUES(?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const l of lines) {
+      insertLine.run(
+        transactionId,
+        l.accountId,
+        l.contactId ?? null,
+        l.description,
+        roundMoney(l.debit),
+        roundMoney(l.credit),
+        roundMoney(l.gstAmount ?? 0),
+        l.gstType ?? null
+      );
     }
   }
 

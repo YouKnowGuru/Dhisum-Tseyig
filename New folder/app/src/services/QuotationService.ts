@@ -9,21 +9,18 @@ import type {
 import { AccountingEngineService } from './AccountingEngineService';
 import type { EngineEvent, EngineTransactionLine, EngineItem } from './AccountingEngineService';
 import { AutomationService } from './AutomationService';
-import { InventoryService } from './InventoryService';
 import { AuditService } from './AuditService';
 
 export class QuotationService {
   private db: Database.Database;
   private engine: AccountingEngineService;
   private automation: AutomationService;
-  private inventory: InventoryService;
   private audit: AuditService;
 
   constructor(dbManager: DatabaseManager) {
     this.db = dbManager.getDatabase();
     this.engine = new AccountingEngineService(dbManager);
     this.automation = new AutomationService(dbManager);
-    this.inventory = new InventoryService(dbManager);
     this.audit = new AuditService(dbManager);
   }
 
@@ -270,20 +267,11 @@ export class QuotationService {
       // 6. Update quotation status to converted
       this.db.prepare("UPDATE quotations SET status = 'converted' WHERE id = ?").run(quoteId);
 
-      // 7. Reduce stock for each item
-      for (const item of quote.items) {
-        try {
-          this.inventory.adjustStock(
-            item.itemId,
-            -item.quantity, // Negative for stock out
-            `Sale from Quote ${quote.quoteNo}`,
-            `Quotation conversion - ${item.itemName}`
-          );
-        } catch (stockError: any) {
-          console.error(`[QuotationService] Failed to adjust stock for item #${item.itemId}:`, stockError);
-          // Don't fail the entire conversion for stock adjustment issues
-        }
-      }
+      // NOTE: stock is NOT adjusted here. The Accounting Engine already deducted
+      // stock atomically in step 5 (event.items on a 'sale' → deductStockAtomic).
+      // The previous step-7 loop called inventory.adjustStock(-qty) AGAIN, which
+      // double-counted the stock-out AND posted a spurious adjustment GL entry.
+      // Removing it leaves exactly one correct deduction.
 
       const transactionId = (saleResult.data as any)?.transactionId;
 

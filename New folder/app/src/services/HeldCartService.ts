@@ -5,9 +5,11 @@ import { AuditService } from './AuditService';
 
 export class HeldCartService {
   private db: Database.Database;
+  private dbManager: DatabaseManager;
   private audit: AuditService;
 
   constructor(dbManager: DatabaseManager) {
+    this.dbManager = dbManager;
     this.db = dbManager.getDatabase();
     this.audit = new AuditService(dbManager);
   }
@@ -17,21 +19,26 @@ export class HeldCartService {
    */
   saveCart(cartName: string, customerId: number | undefined, items: HeldCartItem[]): ApiResponse<{ cartId: number }> {
     try {
-      const result = this.db.prepare(`
-        INSERT INTO held_carts (cart_name, customer_id)
-        VALUES (?, ?)
-      `).run(cartName, customerId || null);
+      // Wrap cart + items in a transaction so a failure can't leave a cart with
+      // only some of its items.
+      const cartId = this.dbManager.safeTransaction(() => {
+        const result = this.db.prepare(`
+          INSERT INTO held_carts (cart_name, customer_id)
+          VALUES (?, ?)
+        `).run(cartName, customerId || null);
 
-      const cartId = result.lastInsertRowid as number;
+        const id = result.lastInsertRowid as number;
 
-      const insertItem = this.db.prepare(`
-        INSERT INTO held_cart_items (cart_id, item_id, quantity, unit_price, gst_rate)
-        VALUES (?, ?, ?, ?, ?)
-      `);
+        const insertItem = this.db.prepare(`
+          INSERT INTO held_cart_items (cart_id, item_id, quantity, unit_price, gst_rate)
+          VALUES (?, ?, ?, ?, ?)
+        `);
 
-      for (const item of items) {
-        insertItem.run(cartId, item.itemId, item.quantity, item.unitPrice, item.gstRate);
-      }
+        for (const item of items) {
+          insertItem.run(id, item.itemId, item.quantity, item.unitPrice, item.gstRate);
+        }
+        return id;
+      });
 
       this.audit.logAction({
         action: 'HELD_CART_SAVE',
@@ -142,8 +149,10 @@ export class HeldCartService {
   deleteCart(cartId: number): ApiResponse {
     try {
       const cart = this.db.prepare('SELECT cart_name FROM held_carts WHERE id = ?').get(cartId) as any;
-      this.db.prepare('DELETE FROM held_cart_items WHERE cart_id = ?').run(cartId);
-      this.db.prepare('DELETE FROM held_carts WHERE id = ?').run(cartId);
+      this.dbManager.safeTransaction(() => {
+        this.db.prepare('DELETE FROM held_cart_items WHERE cart_id = ?').run(cartId);
+        this.db.prepare('DELETE FROM held_carts WHERE id = ?').run(cartId);
+      });
 
       this.audit.logAction({
         action: 'HELD_CART_DELETE',

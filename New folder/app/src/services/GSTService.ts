@@ -38,145 +38,153 @@ export class GSTService {
         WHERE g.type = 'output' AND g.month = ? AND g.year = ? AND t.is_void = 0
       `).get(month, year);
 
-      // Get standard taxable purchases - exclude voided and use DISTINCT to prevent double-counting
+      // NOTE on classification: transactions.tax_type is now the authoritative
+      // standard/domestic flag (denormalized + backfilled; refunds carry the
+      // ORIGINAL sale's tax_type). This replaces the previous fragile
+      // invoice+refund joins that misclassified domestic reversals as standard.
+      // 'refund' replaces the old 'adjustment' refund marker now that refunds
+      // post through the engine as type 'refund'.
+
+      // Standard taxable purchases
       const taxablePurchases = this.db.prepare(`
         SELECT COALESCE(SUM(
           CASE
             WHEN t.type = 'purchase' THEN (t.net_amount - t.gst_amount)
-            WHEN t.type = 'adjustment' THEN -(t.net_amount - t.gst_amount)
+            WHEN t.type = 'refund' THEN -(t.net_amount - t.gst_amount)
             ELSE 0
           END
         ), 0) as total
         FROM transactions t
-        LEFT JOIN refunds r ON r.transaction_id = t.id
-        LEFT JOIN invoices i ON i.transaction_id = COALESCE(r.original_transaction_id, t.id)
-        WHERE (t.type = 'purchase' OR (t.type = 'adjustment' AND t.id IN (SELECT transaction_id FROM refunds)))
+        WHERE t.type IN ('purchase', 'refund')
           AND t.is_void = 0
-          AND COALESCE(i.tax_type, 'standard') = 'standard'
+          AND COALESCE(t.tax_type, 'standard') = 'standard'
           AND t.id IN (SELECT DISTINCT g2.transaction_id FROM gst_entries g2 WHERE g2.type = 'input' AND g2.month = ? AND g2.year = ?)
       `).get(month, year);
 
-      // Get standard taxable sales - exclude voided
+      // Standard taxable sales
       const taxableSales = this.db.prepare(`
         SELECT COALESCE(SUM(
           CASE
             WHEN t.type = 'sale' THEN (t.net_amount - t.gst_amount)
-            WHEN t.type = 'adjustment' THEN -(t.net_amount - t.gst_amount)
+            WHEN t.type = 'refund' THEN -(t.net_amount - t.gst_amount)
             ELSE 0
           END
         ), 0) as total
         FROM transactions t
-        LEFT JOIN refunds r ON r.transaction_id = t.id
-        LEFT JOIN invoices i ON i.transaction_id = COALESCE(r.original_transaction_id, t.id)
-        WHERE (t.type = 'sale' OR (t.type = 'adjustment' AND t.id IN (SELECT transaction_id FROM refunds)))
+        WHERE t.type IN ('sale', 'refund')
           AND t.is_void = 0
-          AND COALESCE(i.tax_type, 'standard') = 'standard'
+          AND COALESCE(t.tax_type, 'standard') = 'standard'
           AND t.id IN (SELECT DISTINCT g2.transaction_id FROM gst_entries g2 WHERE g2.type = 'output' AND g2.month = ? AND g2.year = ?)
       `).get(month, year);
 
-      // Get standard exempt purchases (no GST) - exclude voided
+      // Standard exempt purchases (no GST)
       const exemptPurchases = this.db.prepare(`
         SELECT COALESCE(SUM(
           CASE
             WHEN t.type = 'purchase' THEN t.net_amount
-            WHEN t.type = 'adjustment' THEN -t.net_amount
+            WHEN t.type = 'refund' THEN -t.net_amount
             ELSE 0
           END
         ), 0) as total
         FROM transactions t
-        LEFT JOIN refunds r ON r.transaction_id = t.id
-        LEFT JOIN invoices i ON i.transaction_id = COALESCE(r.original_transaction_id, t.id)
-        WHERE (t.type = 'purchase' OR (t.type = 'adjustment' AND t.id IN (SELECT transaction_id FROM refunds)))
+        WHERE t.type IN ('purchase', 'refund')
           AND t.gst_amount = 0 AND t.is_void = 0
-          AND COALESCE(i.tax_type, 'standard') = 'standard'
+          AND COALESCE(t.tax_type, 'standard') = 'standard'
           AND strftime('%m', t.date) = ? AND strftime('%Y', t.date) = ?
       `).get(month.toString().padStart(2, '0'), year.toString());
 
-      // Get standard exempt sales (no GST) - exclude voided
+      // Standard exempt sales (no GST)
       const exemptSales = this.db.prepare(`
         SELECT COALESCE(SUM(
           CASE
             WHEN t.type = 'sale' THEN t.net_amount
-            WHEN t.type = 'adjustment' THEN -t.net_amount
+            WHEN t.type = 'refund' THEN -t.net_amount
             ELSE 0
           END
         ), 0) as total
         FROM transactions t
-        LEFT JOIN refunds r ON r.transaction_id = t.id
-        LEFT JOIN invoices i ON i.transaction_id = COALESCE(r.original_transaction_id, t.id)
-        WHERE (t.type = 'sale' OR (t.type = 'adjustment' AND t.id IN (SELECT transaction_id FROM refunds)))
+        WHERE t.type IN ('sale', 'refund')
           AND t.gst_amount = 0 AND t.is_void = 0
-          AND COALESCE(i.tax_type, 'standard') = 'standard'
+          AND COALESCE(t.tax_type, 'standard') = 'standard'
           AND strftime('%m', t.date) = ? AND strftime('%Y', t.date) = ?
       `).get(month.toString().padStart(2, '0'), year.toString());
 
-      // Get domestic sales
+      // Domestic sales
       const domesticSales = this.db.prepare(`
         SELECT COALESCE(SUM(
           CASE
             WHEN t.type = 'sale' THEN (t.net_amount - t.gst_amount)
-            WHEN t.type = 'adjustment' THEN -(t.net_amount - t.gst_amount)
+            WHEN t.type = 'refund' THEN -(t.net_amount - t.gst_amount)
             ELSE 0
           END
         ), 0) as total
         FROM transactions t
-        LEFT JOIN refunds r ON r.transaction_id = t.id
-        LEFT JOIN invoices i ON i.transaction_id = COALESCE(r.original_transaction_id, t.id)
-        WHERE (t.type = 'sale' OR (t.type = 'adjustment' AND t.id IN (SELECT transaction_id FROM refunds)))
+        WHERE t.type IN ('sale', 'refund')
           AND t.is_void = 0
-          AND i.tax_type = 'domestic'
+          AND t.tax_type = 'domestic'
           AND t.id IN (SELECT DISTINCT transaction_id FROM gst_entries WHERE type = 'output' AND month = ? AND year = ?)
       `).get(month, year);
 
-      // Get domestic GST output
+      // Domestic GST output
       const domesticGstOutput = this.db.prepare(`
         SELECT COALESCE(SUM(g.amount), 0) as total
         FROM gst_entries g
         JOIN transactions t ON g.transaction_id = t.id
-        LEFT JOIN refunds r ON r.transaction_id = t.id
-        LEFT JOIN invoices i ON i.transaction_id = COALESCE(r.original_transaction_id, t.id)
         WHERE g.type = 'output' AND g.month = ? AND g.year = ? AND t.is_void = 0
-          AND i.tax_type = 'domestic'
+          AND t.tax_type = 'domestic'
       `).get(month, year);
 
-      // Get domestic purchases
+      // Domestic purchases
       const domesticPurchases = this.db.prepare(`
         SELECT COALESCE(SUM(
           CASE
             WHEN t.type = 'purchase' THEN (t.net_amount - t.gst_amount)
-            WHEN t.type = 'adjustment' THEN -(t.net_amount - t.gst_amount)
+            WHEN t.type = 'refund' THEN -(t.net_amount - t.gst_amount)
             ELSE 0
           END
         ), 0) as total
         FROM transactions t
-        LEFT JOIN refunds r ON r.transaction_id = t.id
-        LEFT JOIN invoices i ON i.transaction_id = COALESCE(r.original_transaction_id, t.id)
-        WHERE (t.type = 'purchase' OR (t.type = 'adjustment' AND t.id IN (SELECT transaction_id FROM refunds)))
+        WHERE t.type IN ('purchase', 'refund')
           AND t.is_void = 0
-          AND i.tax_type = 'domestic'
+          AND t.tax_type = 'domestic'
           AND t.id IN (SELECT DISTINCT transaction_id FROM gst_entries WHERE type = 'input' AND month = ? AND year = ?)
       `).get(month, year);
 
-      // Get domestic GST input
+      // Domestic GST input
       const domesticGstInput = this.db.prepare(`
         SELECT COALESCE(SUM(g.amount), 0) as total
         FROM gst_entries g
         JOIN transactions t ON g.transaction_id = t.id
-        LEFT JOIN refunds r ON r.transaction_id = t.id
-        LEFT JOIN invoices i ON i.transaction_id = COALESCE(r.original_transaction_id, t.id)
         WHERE g.type = 'input' AND g.month = ? AND g.year = ? AND t.is_void = 0
-          AND i.tax_type = 'domestic'
+          AND t.tax_type = 'domestic'
+      `).get(month, year);
+
+      // Standard GST computed DIRECTLY from gst_entries (not by subtraction),
+      // so any domestic-misclassification can no longer leak into the standard figure.
+      const standardGstOutputRow = this.db.prepare(`
+        SELECT COALESCE(SUM(g.amount), 0) as total
+        FROM gst_entries g
+        JOIN transactions t ON g.transaction_id = t.id
+        WHERE g.type = 'output' AND g.month = ? AND g.year = ? AND t.is_void = 0
+          AND COALESCE(t.tax_type, 'standard') = 'standard'
+      `).get(month, year);
+      const standardGstInputRow = this.db.prepare(`
+        SELECT COALESCE(SUM(g.amount), 0) as total
+        FROM gst_entries g
+        JOIN transactions t ON g.transaction_id = t.id
+        WHERE g.type = 'input' AND g.month = ? AND g.year = ? AND t.is_void = 0
+          AND COALESCE(t.tax_type, 'standard') = 'standard'
       `).get(month, year);
 
       const inputAmount = (gstInput as any)?.total || 0;
       const outputAmount = (gstOutput as any)?.total || 0;
-      
+
       const domGstOut = (domesticGstOutput as any)?.total || 0;
-      const stdGstOut = outputAmount - domGstOut;
-      
+      const stdGstOut = (standardGstOutputRow as any)?.total || 0;
+
       const domGstIn = (domesticGstInput as any)?.total || 0;
-      const stdGstIn = inputAmount - domGstIn;
-      
+      const stdGstIn = (standardGstInputRow as any)?.total || 0;
+
       const payable = outputAmount - inputAmount;
 
       const summary: GSTSummary = {
@@ -217,7 +225,10 @@ export class GSTService {
           SUM(CASE WHEN g.type = 'input' THEN g.amount ELSE 0 END) as gst_input,
           SUM(CASE WHEN g.type = 'output' THEN g.amount ELSE 0 END) as gst_output,
           SUM(CASE WHEN g.type = 'output' THEN g.amount ELSE -g.amount END) as net_gst,
-          MAX(g.is_filed) as is_filed
+          -- BUG FIX: use MIN so a month is only reported "filed" when EVERY entry
+          -- in it is filed. MAX() marked the whole month filed as soon as a single
+          -- entry was filed, hiding later unfiled (e.g. refund-reversal) entries.
+          MIN(g.is_filed) as is_filed
         FROM gst_entries g
         JOIN transactions t ON g.transaction_id = t.id
         WHERE t.is_void = 0

@@ -52,14 +52,18 @@ function checkRateLimit(identifier: string): { allowed: boolean; retryAfter?: nu
 }
 
 export async function POST(req: NextRequest) {
-  // Use x-forwarded-for header, fallback to unknown
-  const clientIp = req.headers.get('x-forwarded-for') || '127.0.0.1'
-  const rateLimitKey = clientIp
+  // Use the RIGHTMOST x-forwarded-for entry — the value appended by the trusted
+  // edge/proxy, which the client cannot spoof (the leftmost value is
+  // client-controlled and could be rotated to evade the limit).
+  const forwarded = req.headers.get('x-forwarded-for')
+  const clientIp = forwarded
+    ? (forwarded.split(',').map(p => p.trim()).filter(Boolean).pop() || '127.0.0.1')
+    : '127.0.0.1'
 
   try {
-    // Apply rate limiting in all environments
+    // Apply per-IP rate limiting in all environments
     {
-      const rateLimit = checkRateLimit(rateLimitKey)
+      const rateLimit = checkRateLimit(clientIp)
       if (!rateLimit.allowed) {
         return NextResponse.json(
           {
@@ -81,6 +85,30 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
     const validated = loginSchema.parse(body)
+
+    // ALSO rate-limit per target email. This is the real brute-force defense:
+    // even if an attacker rotates IP addresses, attempts against a single
+    // account are capped, so password guessing against one account is throttled.
+    {
+      const emailLimit = checkRateLimit(`email:${validated.email}`)
+      if (!emailLimit.allowed) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Too many login attempts for this account. Please try again later.',
+            retryAfter: emailLimit.retryAfter,
+            requiresCaptcha: true,
+          },
+          {
+            status: 429,
+            headers: {
+              'Retry-After': String(emailLimit.retryAfter),
+              'X-RateLimit-Remaining': '0',
+            },
+          }
+        )
+      }
+    }
 
     await connectDB()
 
@@ -425,7 +453,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Clear rate limit on successful login
-    loginAttempts.delete(rateLimitKey)
+    loginAttempts.delete(clientIp)
+    loginAttempts.delete(`email:${validated.email}`)
 
     // Successful login is logged via audit system
 

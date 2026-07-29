@@ -7,52 +7,54 @@ export class EmailInvoiceService {
    */
   sendInvoiceViaEmail(customerEmail: string, data: PrintInvoiceData): boolean {
     try {
-      const nu = (v: number) => `Nu. ${v.toFixed(2)}`;
+      const nu = (v: number) => `Nu. ${(v || 0).toFixed(2)}`;
       
-      const subject = encodeURIComponent(`Invoice ${data.invoiceNo} from ${data.businessName}`);
+      const businessName = data?.businessName || 'Jinda';
+      const subject = encodeURIComponent(`Invoice ${data?.invoiceNo || ''} from ${businessName}`);
       
       // Construct a professional text-based invoice body
-      let bodyText = `Dear ${data.customerName || 'Customer'},\n\n`;
+      let bodyText = `Dear ${data?.customerName || 'Customer'},\n\n`;
       bodyText += `Please find the details of your invoice below:\n\n`;
       
       // Business Header
       bodyText += `-------------------------------------------\n`;
-      bodyText += `${data.businessName.toUpperCase()}\n`;
-      if (data.taxNo) bodyText += `TPN/GST: ${data.taxNo}\n`;
-      if (data.businessAddress) bodyText += `Address: ${data.businessAddress}\n`;
-      if (data.businessPhone) bodyText += `Phone: ${data.businessPhone}\n`;
+      bodyText += `${businessName.toUpperCase()}\n`;
+      if (data?.taxNo) bodyText += `TPN/GST: ${data.taxNo}\n`;
+      if (data?.businessAddress) bodyText += `Address: ${data.businessAddress}\n`;
+      if (data?.businessPhone) bodyText += `Phone: ${data.businessPhone}\n`;
       bodyText += `-------------------------------------------\n\n`;
       
       // Invoice Info
-      bodyText += `INVOICE NO: ${data.invoiceNo}\n`;
-      bodyText += `DATE: ${data.date}\n`;
-      bodyText += `PAYMENT: ${data.paymentMode.toUpperCase()}\n\n`;
+      bodyText += `INVOICE NO: ${data?.invoiceNo || ''}\n`;
+      bodyText += `DATE: ${data?.date || new Date().toISOString().split('T')[0]}\n`;
+      bodyText += `PAYMENT: ${(data?.paymentMode || 'cash').toUpperCase()}\n\n`;
       
       // Items Table Header
       bodyText += `${'ITEM'.padEnd(25)} ${'QTY'.padStart(5)} ${'TOTAL'.padStart(12)}\n`;
       bodyText += `${'-'.repeat(44)}\n`;
       
       // Items List
-      data.items.forEach(item => {
-        const desc = item.description.length > 24 ? item.description.substring(0, 21) + '...' : item.description;
-        bodyText += `${desc.padEnd(25)} ${item.quantity.toString().padStart(5)} ${nu(item.total).padStart(12)}\n`;
+      (data?.items || []).forEach(item => {
+        const itemDesc = item?.description || (item as any)?.name || '';
+        const desc = itemDesc.length > 24 ? itemDesc.substring(0, 21) + '...' : itemDesc;
+        bodyText += `${desc.padEnd(25)} ${(item?.quantity || 0).toString().padStart(5)} ${nu(item?.total || 0).padStart(12)}\n`;
       });
       
       bodyText += `${'-'.repeat(44)}\n`;
       
       // Totals
-      bodyText += `${'SUBTOTAL:'.padEnd(31)} ${nu(data.subtotal).padStart(12)}\n`;
-      if (data.discountAmount > 0) {
+      bodyText += `${'SUBTOTAL:'.padEnd(31)} ${nu(data?.subtotal || 0).padStart(12)}\n`;
+      if (data?.discountAmount && data.discountAmount > 0) {
         bodyText += `${'DISCOUNT:'.padEnd(31)} ${nu(data.discountAmount).padStart(12)}\n`;
       }
-      bodyText += `${'GST TOTAL:'.padEnd(31)} ${nu(data.gstAmount).padStart(12)}\n`;
-      bodyText += `${'GRAND TOTAL:'.padEnd(31)} ${nu(data.totalAmount).padStart(12)}\n\n`;
+      bodyText += `${'GST TOTAL:'.padEnd(31)} ${nu(data?.gstAmount || 0).padStart(12)}\n`;
+      bodyText += `${'GRAND TOTAL:'.padEnd(31)} ${nu(data?.totalAmount || 0).padStart(12)}\n\n`;
       
-      if (data.notes) {
+      if (data?.notes) {
         bodyText += `NOTES: ${data.notes}\n\n`;
       }
       
-      bodyText += `Thank you for choosing ${data.businessName}!\n`;
+      bodyText += `Thank you for choosing ${businessName}!\n`;
       bodyText += `-------------------------------------------`;
 
       const mailtoUrl = `mailto:${customerEmail}?subject=${subject}&body=${encodeURIComponent(bodyText)}`;

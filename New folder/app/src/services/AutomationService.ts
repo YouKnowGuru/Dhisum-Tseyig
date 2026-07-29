@@ -50,8 +50,12 @@ export class AutomationService {
                 'DrukPNB': { debit: '1200', credit: '1300' },
                 'BDBL': { debit: '1200', credit: '1300' },
                 'DKBank': { debit: '1200', credit: '1300' },
-                'card': { debit: '1200', credit: '1300' },
-                'credit': { debit: '1100', credit: '1300' }
+                'card': { debit: '1200', credit: '1300' }
+                // NOTE: 'credit' intentionally has NO receipt mapping. A receipt
+                // settles an EXISTING receivable, so it must move real money
+                // (cash/bank). The old mapping (Dr 1100 Cash / Cr 1300 AR) posted
+                // a phantom cash receipt that never happened. Omitting it makes
+                // mapAccounts throw, blocking the incorrect posting.
             },
             'payment': {
                 'cash': { debit: '2100', credit: '1100' },
@@ -62,8 +66,10 @@ export class AutomationService {
                 'DrukPNB': { debit: '2100', credit: '1200' },
                 'BDBL': { debit: '2100', credit: '1200' },
                 'DKBank': { debit: '2100', credit: '1200' },
-                'card': { debit: '2100', credit: '1200' },
-                'credit': { debit: '2100', credit: '1200' }
+                'card': { debit: '2100', credit: '1200' }
+                // NOTE: 'credit' intentionally has NO payment mapping — a payment
+                // settles an existing payable with real money. The old mapping
+                // (Cr 1200 Bank) recorded a bank outflow that never occurred.
             },
             'refund': {
                 'cash': { debit: '4000', credit: '1100' },

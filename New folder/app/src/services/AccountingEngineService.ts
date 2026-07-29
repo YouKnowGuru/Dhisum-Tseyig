@@ -1,6 +1,7 @@
 import { DatabaseManager } from '../database/DatabaseManager';
 import Database from 'better-sqlite3';
 import { isAfter, parseISO } from 'date-fns';
+import { roundMoney, toCents, fromCents } from '../utils/money';
 import type { PaymentMode, TransactionType } from '../types';
 
 export interface EngineTransactionLine {
@@ -47,6 +48,15 @@ export interface EngineEvent {
     notes?: string | null;
     terms?: string | null;
   };
+  /**
+   * Optional extra writes to perform INSIDE the same DB transaction, after the
+   * transaction row, lines, GST entries, stock movements and invoice have been
+   * written but before the transaction commits. Used by RefundService to insert
+   * the `refunds`/`refund_items` records atomically with the accounting journal,
+   * so a refund can never have a posted journal without its refund record (and
+   * vice-versa). If this throws, the entire transaction rolls back.
+   */
+  extraWrites?: (transactionId: number, transactionNo: string) => void;
 }
 
 /**
@@ -144,8 +154,8 @@ export class AccountingEngineService {
         const transactionNo = this.generateTransactionNo(event.type);
         const transactionResult = this.db.prepare(`
           INSERT INTO transactions
-          (transaction_no, type, date, contact_id, description, total_amount, gst_amount, discount_amount, net_amount, payment_mode, reference, created_by)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (transaction_no, type, date, contact_id, description, total_amount, gst_amount, discount_amount, net_amount, payment_mode, reference, created_by, tax_type)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).run(
           transactionNo,
           event.type,
@@ -158,7 +168,8 @@ export class AccountingEngineService {
           event.netAmount,
           event.paymentMode || null,
           event.reference || null,
-          event.createdBy || null
+          event.createdBy || null,
+          event.taxType || 'standard'
         );
 
         const transactionId = transactionResult.lastInsertRowid as number;
@@ -197,6 +208,13 @@ export class AccountingEngineService {
         // Step 12: Update contact balance if applicable
         if (event.contactId) {
           this.updateContactBalance(event.contactId);
+        }
+
+        // Step 12b: any caller-supplied extra writes (e.g. the refunds /
+        // refund_items records) run INSIDE this same transaction so they commit
+        // or roll back together with the journal. Throws -> full rollback.
+        if (typeof event.extraWrites === 'function') {
+          event.extraWrites(transactionId, transactionNo);
         }
 
         // Return core transaction info
@@ -308,16 +326,16 @@ export class AccountingEngineService {
   }
 
   private validateBalance(lines: EngineTransactionLine[]) {
-    // Use an epsilon comparison rather than direct equality. Independent
-    // .toFixed(2) rounding can produce matching strings that mask a real
-    // imbalance when the deltas have opposite signs; an epsilon handles
-    // both true equality and float drift within 0.5 of a cent.
-    const BALANCE_EPSILON = 0.005;
-    const totalDebit = lines.reduce((sum, line) => sum + (line.debitAmount || 0), 0);
-    const totalCredit = lines.reduce((sum, line) => sum + (line.creditAmount || 0), 0);
+    // PRECISION FIX: compare in INTEGER CENTS, not floats. Summing many rounded
+    // line values as floats can drift by a fraction of a cent (0.1+0.2 !== 0.3),
+    // which previously could either fail a legitimate balanced journal or let a
+    // genuinely-unbalanced one slip through the 0.005 epsilon. Integer-cent
+    // comparison is exact and has no drift.
+    const debitCents = lines.reduce((sum, line) => sum + toCents(line.debitAmount || 0), 0);
+    const creditCents = lines.reduce((sum, line) => sum + toCents(line.creditAmount || 0), 0);
 
-    if (Math.abs(totalDebit - totalCredit) >= BALANCE_EPSILON) {
-      throw new Error(`Double Entry Rule: Transaction not balanced. Debits: ${totalDebit.toFixed(2)}, Credits: ${totalCredit.toFixed(2)}`);
+    if (debitCents !== creditCents) {
+      throw new Error(`Double Entry Rule: Transaction not balanced. Debits: ${fromCents(debitCents).toFixed(2)}, Credits: ${fromCents(creditCents).toFixed(2)}`);
     }
   }
 
@@ -338,9 +356,9 @@ export class AccountingEngineService {
         line.contactId || null,
         line.itemId || null,
         line.description,
-        line.debitAmount,
-        line.creditAmount,
-        line.gstAmount || 0,
+        roundMoney(line.debitAmount || 0),
+        roundMoney(line.creditAmount || 0),
+        roundMoney(line.gstAmount || 0),
         line.gstRate || 0,
         line.gstType || null
       );
@@ -348,7 +366,11 @@ export class AccountingEngineService {
   }
 
   private saveGstEntries(transactionId: number, lines: EngineTransactionLine[], dateStr: string) {
-    const txDate = new Date(dateStr);
+    // Derive the GST filing period from the TRANSACTION date (parseISO treats
+    // 'YYYY-MM-DD' as local midnight, matching how the app formats dates), NOT
+    // from the system clock — so a backdated transaction files GST in the
+    // correct month/year.
+    const txDate = parseISO(dateStr);
     const month = txDate.getMonth() + 1;
     const year = txDate.getFullYear();
 
@@ -419,14 +441,38 @@ export class AccountingEngineService {
         `Tx ${transactionId}`
       );
 
-      // Stock Rule 4: Update stock quantity
+      // Stock Rule 4: Update stock quantity and WAC
       // For sales with atomic deduction, stock was already deducted — only record the movement
       if (type === 'out' && stockAlreadyDeducted) {
         // Stock already atomically deducted in deductStockAtomic, skip UPDATE here
         continue;
       }
-      const stockChange = type === 'in' ? item.quantity : -item.quantity;
-      updateItemStock.run(stockChange, item.itemId);
+
+      if (type === 'in') {
+        const itemRow = getAvgCost.get(item.itemId) as any;
+        const fullItemRow = this.db.prepare('SELECT quantity_in_stock, average_cost FROM items WHERE id = ?').get(item.itemId) as any;
+        if (fullItemRow) {
+          const currentQty = Math.max(0, Number(fullItemRow.quantity_in_stock) || 0);
+          const currentCost = Number(fullItemRow.average_cost) || 0;
+          const newQty = item.quantity;
+          const newCost = item.unitPrice;
+          const totalQty = currentQty + newQty;
+          const newAvgCost = totalQty > 0 ? Number((((currentQty * currentCost) + (newQty * newCost)) / totalQty).toFixed(2)) : newCost;
+
+          this.db.prepare(`
+            UPDATE items
+            SET quantity_in_stock = quantity_in_stock + ?,
+                average_cost = ?,
+                purchase_price = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).run(newQty, newAvgCost, newCost, item.itemId);
+        } else {
+          updateItemStock.run(item.quantity, item.itemId);
+        }
+      } else {
+        updateItemStock.run(-item.quantity, item.itemId);
+      }
     }
   }
 

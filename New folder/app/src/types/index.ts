@@ -248,6 +248,10 @@ export interface AddStockData {
   paymentMode: PaymentMode;
   reference?: string;
   notes?: string;
+  /** Optional posting date (YYYY-MM-DD) for the purchase. Defaults to today.
+   *  The GST input entry is filed in this date's month/year, so a backdated
+   *  purchase lands in the correct GST period. */
+  date?: string;
 }
 
 // GST Types

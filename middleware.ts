@@ -2,9 +2,43 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  const response = NextResponse.next()
-
   const { pathname } = request.nextUrl
+
+  // 0. CSRF protection for cookie-authenticated admin API routes.
+  // State-changing requests to /api/admin/* (and NextAuth's own mutation
+  // endpoints) must originate from this site. We enforce this with the
+  // Fetch Metadata `Sec-Fetch-Site` header plus an Origin/Host match as a
+  // fallback. Bearer-token API clients (the POS desktop app) don't send
+  // Sec-Fetch-Site and hit /api/auth|license — NOT /api/admin — so they are
+  // unaffected.
+  if (
+    (pathname.startsWith('/api/admin') || pathname.startsWith('/api/auth')) &&
+    !['GET', 'HEAD', 'OPTIONS'].includes(request.method)
+  ) {
+    const secFetchSite = request.headers.get('sec-fetch-site')
+    const origin = request.headers.get('origin')
+    const host = request.headers.get('host')
+
+    let originHost: string | null = null
+    if (origin) {
+      try {
+        originHost = new URL(origin).host
+      } catch {
+        originHost = null
+      }
+    }
+
+    // Reject only when we have POSITIVE evidence of a cross-site request.
+    // If neither header is present (non-browser API client), allow.
+    const crossSiteByFetchMeta = secFetchSite === 'cross-site'
+    const crossSiteByOrigin = originHost !== null && host !== null && originHost !== host
+
+    if (crossSiteByFetchMeta || crossSiteByOrigin) {
+      return NextResponse.json({ error: 'Forbidden: cross-site request blocked' }, { status: 403 })
+    }
+  }
+
+  const response = NextResponse.next()
 
   // 1. Technical SEO: Set noindex header for admin and system pages
   // NOTE: Do NOT add these to robots.txt disallow — Googlebot must be able to

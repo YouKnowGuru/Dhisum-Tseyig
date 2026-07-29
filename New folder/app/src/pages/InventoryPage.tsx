@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Plus,
   Search,
@@ -15,6 +15,10 @@ export function InventoryPage() {
   const { showNotification } = useAppStore();
   const [items, setItems] = useState<Item[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const ITEMS_PER_PAGE = 50;
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showStockModal, setShowStockModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
@@ -59,7 +63,7 @@ export function InventoryPage() {
 
   useEffect(() => {
     loadDefaults();
-    loadItems();
+    loadItems(1, '');
     loadLowStock();
     loadCategories();
     loadUnits();
@@ -101,11 +105,19 @@ export function InventoryPage() {
     }
   };
 
-  const loadItems = async () => {
+  const loadItems = async (page: number, search: string) => {
     try {
-      const result = await window.electronSecureAPI.inventory.getItems();
+      const result = await window.electronSecureAPI.inventory.getItems({ page, limit: ITEMS_PER_PAGE, search });
       if (result?.success) {
-        setItems(Array.isArray(result.data) ? result.data : []);
+        // Paginated response: { items, total }
+        if (result.data && typeof result.data === 'object' && 'items' in result.data) {
+          setItems(Array.isArray(result.data.items) ? result.data.items : []);
+          setTotalItems(typeof result.data.total === 'number' ? result.data.total : 0);
+        } else {
+          // Fallback: old flat array (dropdown compat)
+          setItems(Array.isArray(result.data) ? result.data : []);
+          setTotalItems(Array.isArray(result.data) ? result.data.length : 0);
+        }
       }
     } catch (_error) {
       showNotification('Failed to load items', 'error');
@@ -158,7 +170,7 @@ export function InventoryPage() {
         setShowAddModal(false);
         setIsEditing(false);
         setSelectedItem(null);
-        loadItems();
+        loadItems(currentPage, searchQuery);
         resetForm();
       } else {
         showNotification(result.message || 'Failed to create item', 'error');
@@ -189,7 +201,7 @@ export function InventoryPage() {
       if (result.success) {
         showNotification('Stock added successfully', 'success');
         setShowStockModal(false);
-        loadItems();
+        loadItems(currentPage, searchQuery);
         loadLowStock();
         resetStockForm();
       } else {
@@ -230,7 +242,7 @@ export function InventoryPage() {
       const result = await window.electronSecureAPI.inventory.deleteItem(id);
       if (result.success) {
         showNotification('Item deleted successfully', 'success');
-        loadItems();
+        loadItems(currentPage, searchQuery);
       } else {
         showNotification(result.message || 'Failed to delete item', 'error');
       }
@@ -331,11 +343,22 @@ export function InventoryPage() {
     }).format(amount).replace('BTN', 'Nu.');
   };
 
-  const filteredItems = items.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.category?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredItems = items; // filtering is now server-side
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (searchDebounce.current) clearTimeout(searchDebounce.current);
+    searchDebounce.current = setTimeout(() => {
+      setCurrentPage(1);
+      loadItems(1, value);
+    }, 350);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    loadItems(page, searchQuery);
+  };
 
   return (
     <div className="space-y-6">
@@ -369,7 +392,7 @@ export function InventoryPage() {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search inventory by name, code or category..."
             className="w-full pl-12 pr-4 py-4 bg-white border-slate-100 rounded-2xl focus:ring-2 focus:ring-bhutan-maroon/20 focus:border-bhutan-maroon transition-all shadow-sm font-medium"
           />
@@ -499,6 +522,42 @@ export function InventoryPage() {
               <Package className="w-12 h-12 text-slate-200" />
             </div>
             <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No matching inventory found</p>
+          </div>
+        )}
+
+        {/* Pagination Bar */}
+        {totalItems > ITEMS_PER_PAGE && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-50">
+            <p className="text-xs font-bold text-slate-400">
+              Showing {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, totalItems)}–{Math.min(currentPage * ITEMS_PER_PAGE, totalItems)} of {totalItems.toLocaleString()} items
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage <= 1}
+                className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-slate-100 text-slate-500 hover:bg-bhutan-maroon hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >← Prev</button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+                const p = start + i;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => handlePageChange(p)}
+                    className={`w-9 h-9 rounded-xl text-xs font-black transition-all ${
+                      p === currentPage
+                        ? 'bg-bhutan-maroon text-white shadow-md'
+                        : 'bg-slate-100 text-slate-500 hover:bg-bhutan-maroon/10'
+                    }`}
+                  >{p}</button>
+                );
+              })}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages}
+                className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-slate-100 text-slate-500 hover:bg-bhutan-maroon hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >Next →</button>
+            </div>
           </div>
         )}
       </div>

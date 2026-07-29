@@ -142,8 +142,12 @@ export class DatabaseManager {
   closeAndEncrypt(): void {
     try {
       if (this.db.open) {
-        // Flush WAL to main DB file before encrypting
-        this.db.pragma('wal_checkpoint(TRUNCATE)');
+        // Flush WAL to main DB file before encrypting.
+        // Use RESTART first to release shared-memory locks, then TRUNCATE to
+        // zero out the WAL file. On Windows, this gives the OS time to release
+        // file handles before we attempt to delete the sidecar files.
+        try { this.db.pragma('wal_checkpoint(RESTART)'); } catch { /* ignore */ }
+        try { this.db.pragma('wal_checkpoint(TRUNCATE)'); } catch { /* ignore */ }
         this.db.close();
       }
     } catch (e) {
@@ -157,7 +161,10 @@ export class DatabaseManager {
         fs.writeFileSync(this.securePath, encrypted, { mode: 0o600 });
         console.log('[DatabaseManager] Database encrypted on disk.');
 
-        // Securely delete the plaintext working file + sidecar files
+        // Securely delete the plaintext working file + sidecar files.
+        // Sidecar deletion is best-effort: on Windows the OS may still hold a
+        // brief lock on WAL/SHM after close(). Any leftover files are harmless
+        // — SQLite will clean them up automatically on the next open.
         this.secureDeleteFile(this.dbPath);
         this.deleteSqliteSidecarFiles(this.dbPath);
       }
@@ -225,7 +232,10 @@ export class DatabaseManager {
   }
 
   /**
-   * Delete SQLite sidecar files for a database path.
+   * Delete SQLite sidecar files (WAL and SHM) for a database path.
+   * Deletion is best-effort: on Windows the OS may hold a brief lock on
+   * these files immediately after db.close(). Leftover files are harmless —
+   * SQLite cleans them up automatically on the next open().
    */
   private deleteSqliteSidecarFiles(databasePath: string): void {
     const sidecarFiles = [`${databasePath}-wal`, `${databasePath}-shm`];
@@ -234,8 +244,10 @@ export class DatabaseManager {
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }
-      } catch (error) {
-        console.warn(`Failed to delete SQLite sidecar file: ${filePath}`, error);
+      } catch {
+        // Best-effort: Windows may still hold a brief lock on WAL/SHM after
+        // db.close(). These files are harmless leftovers; SQLite will remove
+        // them on next startup. Do not surface this as an error.
       }
     }
   }
@@ -741,7 +753,7 @@ export class DatabaseManager {
       CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         transaction_no TEXT UNIQUE NOT NULL,
-        type TEXT NOT NULL CHECK (type IN ('sale', 'purchase', 'receipt', 'payment', 'transfer', 'adjustment', 'journal')),
+        type TEXT NOT NULL CHECK (type IN ('sale', 'purchase', 'receipt', 'payment', 'transfer', 'adjustment', 'journal', 'refund')),
         date DATE NOT NULL,
         reference TEXT,
         contact_id INTEGER,
@@ -1329,6 +1341,10 @@ export class DatabaseManager {
       'CREATE INDEX IF NOT EXISTS idx_contacts_type ON contacts(type)',
       'CREATE INDEX IF NOT EXISTS idx_items_code ON items(code)',
       'CREATE INDEX IF NOT EXISTS idx_items_name ON items(name)',
+      'CREATE INDEX IF NOT EXISTS idx_transactions_contact_date ON transactions(contact_id, date)',
+      'CREATE INDEX IF NOT EXISTS idx_accounts_type ON accounts(type)',
+      'CREATE INDEX IF NOT EXISTS idx_accounts_subtype ON accounts(subtype)',
+      'CREATE INDEX IF NOT EXISTS idx_transaction_lines_acc_txn ON transaction_lines(account_id, transaction_id)',
     ];
 
     for (const index of indexes) {
@@ -1378,6 +1394,41 @@ export class DatabaseManager {
       }
     }
 
+    // Migration: re-type GST Input (1500) from liability to asset on existing
+    // databases. The account was originally seeded as a liability; purchases
+    // debit it, so it carried a negative liability balance and broke the
+    // balance sheet. Re-typing the account is sufficient — no transaction_lines
+    // need to change because the lines themselves are correct (debit balance);
+    // only the account's classification was wrong. Guarded to run once.
+    try {
+      const gstInputMigrated = this.db.prepare("SELECT 1 FROM settings WHERE key = 'migration_gst_input_asset_v1'").get();
+      if (!gstInputMigrated) {
+        const gstInput = this.db.prepare("SELECT id, type FROM accounts WHERE code = '1500'").get() as any;
+        if (gstInput && gstInput.type !== 'asset') {
+          this.db.prepare("UPDATE accounts SET type = 'asset', subtype = 'current_asset' WHERE code = '1500'").run();
+          console.log('[DatabaseManager] Migration: re-typed GST Input (1500) account from liability to asset');
+        }
+        this.db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_gst_input_asset_v1', '1')").run();
+      }
+    } catch (e) {
+      console.warn('[DatabaseManager] Migration: failed to re-type GST Input account', e);
+    }
+
+    // Migration: allow the 'refund' transaction type. Refunds are now posted
+    // through the accounting engine as type 'refund' (atomic with their stock
+    // restore + refund record) instead of 'adjustment'. The transactions.type
+    // CHECK constraint originally omitted 'refund', so existing databases need
+    // the table rebuilt with the extended constraint. Guarded to run once.
+    try {
+      const refundTypeMigrated = this.db.prepare("SELECT 1 FROM settings WHERE key = 'migration_refund_type_v1'").get();
+      if (!refundTypeMigrated) {
+        this.extendTransactionsTypeWithRefund();
+        this.db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_refund_type_v1', '1')").run();
+      }
+    } catch (e) {
+      console.warn('[DatabaseManager] Migration: failed to add refund transaction type', e);
+    }
+
     // Migration: ensure tax_type exists on invoices table
     try {
       const invoiceCols = this.db.pragma('table_info(invoices)') as any[];
@@ -1387,6 +1438,30 @@ export class DatabaseManager {
       }
     } catch (e) {
       console.warn('[DatabaseManager] Migration: failed to add tax_type to invoices', e);
+    }
+
+    // Migration: denormalize tax_type onto the transactions table so GST
+    // reporting can classify a sale/refund as standard vs domestic directly,
+    // instead of re-deriving it through a fragile invoice + refund join (which
+    // misclassified domestic reversals as standard). Backfill from the linked
+    // invoice (for refunds, the ORIGINAL sale's invoice).
+    try {
+      const txCols = this.db.pragma('table_info(transactions)') as any[];
+      if (txCols.length > 0 && !txCols.some(c => c.name === 'tax_type')) {
+        this.db.prepare("ALTER TABLE transactions ADD COLUMN tax_type TEXT DEFAULT 'standard'").run();
+        // Backfill: sale/purchase -> its own invoice; refund -> original sale's invoice.
+        this.db.prepare(`
+          UPDATE transactions SET tax_type = COALESCE(
+            (SELECT i.tax_type FROM invoices i WHERE i.transaction_id = transactions.id),
+            (SELECT i2.tax_type FROM refunds r JOIN invoices i2 ON i2.transaction_id = r.original_transaction_id
+              WHERE r.transaction_id = transactions.id),
+            'standard'
+          )
+        `).run();
+        console.log('[DatabaseManager] Migration: added + backfilled tax_type on transactions');
+      }
+    } catch (e) {
+      console.warn('[DatabaseManager] Migration: failed to add tax_type to transactions', e);
     }
 
     // Check if categories exist
@@ -1412,7 +1487,13 @@ export class DatabaseManager {
       { code: '1200', name: 'Bank Accounts', type: 'asset', subtype: 'current_asset', is_system: 1 },
       { code: '1300', name: 'Debtors', type: 'asset', subtype: 'current_asset', is_system: 1 },
       { code: '1400', name: 'Inventory', type: 'asset', subtype: 'current_asset', is_system: 1 },
-      { code: '1500', name: 'GST Input', type: 'liability', subtype: 'current_liability', is_system: 1 },
+      // BUG FIX: GST Input (input tax credit on purchases) is an ASSET, not a
+      // liability — it is tax the business is owed back / can offset against
+      // GST collected. It is debited on purchases and carries a debit balance,
+      // so it must sit under assets (current_asset) for the balance sheet to
+      // reconcile. Previously typed as a liability, which produced a negative
+      // liability and a non-balancing balance sheet.
+      { code: '1500', name: 'GST Input', type: 'asset', subtype: 'current_asset', is_system: 1 },
       { code: '2000', name: 'Liabilities', type: 'liability', subtype: 'current_liability', is_system: 1 },
       { code: '2100', name: 'Creditors', type: 'liability', subtype: 'current_liability', is_system: 1 },
       { code: '2200', name: 'GST Output', type: 'liability', subtype: 'current_liability', is_system: 1 },
@@ -1447,6 +1528,82 @@ export class DatabaseManager {
         console.warn(`Failed to insert account ${account.code}: `, error);
       }
     }
+  }
+
+  /**
+   * Migration helper: rebuild the `transactions` table so its type CHECK
+   * constraint also allows 'refund'. SQLite cannot ALTER a CHECK constraint,
+   * so we recreate the table and copy rows across. The column set is read from
+   * the live table (PRAGMA table_info) so the copy survives any later column
+   * additions. Runs inside a transaction; if anything fails the original table
+   * is left untouched.
+   */
+  private extendTransactionsTypeWithRefund(): void {
+    // Already migrated? (fresh installs created with the new constraint)
+    const tableSqlRow = this.db
+      .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'transactions'")
+      .get() as any;
+    const tableSql: string = tableSqlRow?.sql || '';
+    if (tableSql.includes("'refund'")) {
+      return; // constraint already includes refund — nothing to do
+    }
+
+    this.safeTransaction(() => {
+      // Capture indexes/triggers that reference the table so we can recreate
+      // them after the rename (they are dropped with the old table name).
+      const dependents = this.db.prepare(
+        "SELECT type, name, sql FROM sqlite_master WHERE (type = 'index' OR type = 'trigger') AND tbl_name = 'transactions' AND sql IS NOT NULL"
+      ).all() as any[];
+
+      this.db.exec(`
+        CREATE TABLE transactions_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          transaction_no TEXT UNIQUE NOT NULL,
+          type TEXT NOT NULL CHECK (type IN ('sale', 'purchase', 'receipt', 'payment', 'transfer', 'adjustment', 'journal', 'refund')),
+          date DATE NOT NULL,
+          reference TEXT,
+          contact_id INTEGER,
+          description TEXT,
+          total_amount REAL NOT NULL DEFAULT 0,
+          gst_amount REAL DEFAULT 0,
+          discount_amount REAL DEFAULT 0,
+          net_amount REAL NOT NULL DEFAULT 0,
+          payment_mode TEXT CHECK (payment_mode IN ('cash', 'bank', 'credit', 'card', 'upi', 'mBOB', 'BNB', 'TPay', 'DrukPNB', 'BDBL', 'DKBank')),
+          status TEXT DEFAULT 'completed' CHECK (status IN ('draft', 'completed', 'void')),
+          is_void INTEGER DEFAULT 0,
+          void_reason TEXT,
+          voided_at DATETIME,
+          voided_by INTEGER,
+          invoice_id INTEGER,
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (contact_id) REFERENCES contacts(id),
+          FOREIGN KEY (created_by) REFERENCES users(id),
+          FOREIGN KEY (voided_by) REFERENCES users(id)
+        )
+      `);
+
+      // Copy rows using the live column list so extra columns (added by other
+      // migrations) are preserved.
+      const cols = (this.db.pragma('table_info(transactions)') as any[]).map((c: any) => `"${c.name}"`);
+      const colList = cols.join(', ');
+      this.db.exec(`INSERT INTO transactions_new (${colList}) SELECT ${colList} FROM transactions`);
+
+      this.db.exec('DROP TABLE transactions');
+      this.db.exec('ALTER TABLE transactions_new RENAME TO transactions');
+
+      // Recreate any indexes/triggers that were attached to the old table.
+      for (const dep of dependents) {
+        try {
+          this.db.exec(dep.sql);
+        } catch (e) {
+          console.warn(`[DatabaseManager] Migration: could not recreate ${dep.type} ${dep.name}:`, e);
+        }
+      }
+
+      console.log('[DatabaseManager] Migration: rebuilt transactions table to allow refund type');
+    });
   }
 
   /**
@@ -1532,6 +1689,12 @@ export class DatabaseManager {
         } catch (_e) { /* Column already exists */ }
       }
     }
+
+    // Ensure is_active column exists on accounts table (legacy DB fix)
+    try {
+      this.db.exec('ALTER TABLE accounts ADD COLUMN is_active INTEGER DEFAULT 1');
+      console.log('[DatabaseManager] Added is_active column to accounts table');
+    } catch (_e) { /* Column already exists */ }
 
     // 2. Ensure Payroll Liability Accounts exist
     const payrollAccounts = [

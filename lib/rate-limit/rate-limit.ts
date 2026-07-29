@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Redis from 'ioredis'
+import { createHash } from 'crypto'
 
 // Redis client for distributed rate limiting
 const getRedisClient = (): Redis | null => {
@@ -54,22 +55,43 @@ interface RateLimitOptions {
 }
 
 /**
- * Get client IP from request
+ * Get client IP from request.
+ * Uses the RIGHTMOST x-forwarded-for entry — the one appended by the trusted
+ * edge/proxy (Vercel/Cloudflare) and the hardest for the client to spoof. The
+ * leftmost value is fully client-controlled and can be rotated to evade limits.
  */
 function getClientIP(req: NextRequest): string {
   const forwarded = req.headers.get('x-forwarded-for')
   if (forwarded) {
-    return forwarded.split(',')[0].trim()
+    const parts = forwarded.split(',').map(p => p.trim()).filter(Boolean)
+    if (parts.length > 0) {
+      return parts[parts.length - 1]
+    }
   }
-  
+
   const realIP = req.headers.get('x-real-ip')
   if (realIP) {
     return realIP
   }
-  
+
   // Use a hash of user agent as fallback
   const userAgent = req.headers.get('user-agent') || 'unknown'
   return 'ua-' + userAgent.slice(0, 20)
+}
+
+/**
+ * A stable fingerprint of the request that does NOT depend on the spoofable
+ * client IP. Mixed into the rate-limit key so that rotating the
+ * x-forwarded-for header cannot reset the limit window for the same client.
+ */
+function getRequestFingerprint(req: NextRequest): string {
+  const ua = req.headers.get('user-agent') || ''
+  const acceptLang = req.headers.get('accept-language') || ''
+  const acceptEnc = req.headers.get('accept-encoding') || ''
+  return createHash('sha256')
+    .update(`${ua}|${acceptLang}|${acceptEnc}`)
+    .digest('hex')
+    .slice(0, 16)
 }
 
 /**
@@ -158,8 +180,11 @@ export async function rateLimit(
   options: RateLimitOptions = { windowMs: 60 * 1000, maxRequests: 10 }
 ): Promise<NextResponse | null> {
   const ip = getClientIP(req)
-  const key = `ratelimit:${ip}:${req.nextUrl.pathname}`
-  
+  // Mix a spoof-resistant fingerprint into the key so an attacker cannot reset
+  // their limit simply by rotating the x-forwarded-for header.
+  const fingerprint = getRequestFingerprint(req)
+  const key = `ratelimit:${ip}:${fingerprint}:${req.nextUrl.pathname}`
+
   const result = await checkRateLimitRedis(key, options)
   
   if (!result.allowed) {

@@ -474,13 +474,61 @@ export class AccountingService {
         params.push(type);
       }
 
-      query += ' ORDER BY name';
+      query += ' ORDER BY name LIMIT 500';
 
       const contacts = this.db.prepare(query).all(...params);
       return contacts.map((c: any) => this.mapContactFromDb(c));
     } catch (error) {
       console.error('Get contacts error:', error);
       return [];
+    }
+  }
+
+  getContactsPaginated(
+    type?: 'customer' | 'supplier',
+    page: number = 1,
+    limit: number = 50,
+    search: string = ''
+  ): { contacts: Contact[]; total: number } {
+    try {
+      const offset = (page - 1) * limit;
+      const safeLimit = Math.min(Math.max(1, limit), 200);
+      const params: any[] = [];
+
+      let countQuery = 'SELECT COUNT(*) AS cnt FROM contacts WHERE is_active = 1';
+      let selectQuery = 'SELECT * FROM contacts WHERE is_active = 1';
+
+      if (type) {
+        countQuery += ' AND type = ?';
+        selectQuery += ' AND type = ?';
+        params.push(type);
+      }
+
+      if (search && search.trim()) {
+        const pattern = `%${search.trim()}%`;
+        countQuery += ' AND (name LIKE ? OR phone LIKE ? OR email LIKE ? OR contact_person LIKE ?)';
+        selectQuery += ' AND (name LIKE ? OR phone LIKE ? OR email LIKE ? OR contact_person LIKE ?)';
+        const searchParams = [pattern, pattern, pattern, pattern];
+        
+        const countParams = [...params, ...searchParams];
+        const total = (this.db.prepare(countQuery).get(...countParams) as any).cnt;
+
+        selectQuery += ' ORDER BY name LIMIT ? OFFSET ?';
+        const selectParams = [...params, ...searchParams, safeLimit, offset];
+        const contacts = this.db.prepare(selectQuery).all(...selectParams);
+
+        return { contacts: contacts.map((c: any) => this.mapContactFromDb(c)), total };
+      }
+
+      const total = (this.db.prepare(countQuery).get(...params) as any).cnt;
+      selectQuery += ' ORDER BY name LIMIT ? OFFSET ?';
+      const selectParams = [...params, safeLimit, offset];
+      const contacts = this.db.prepare(selectQuery).all(...selectParams);
+
+      return { contacts: contacts.map((c: any) => this.mapContactFromDb(c)), total };
+    } catch (error) {
+      console.error('Get contacts paginated error:', error);
+      return { contacts: [], total: 0 };
     }
   }
 
@@ -779,9 +827,13 @@ export class AccountingService {
         creditAmount: 0
       });
 
-      // Handle discount — debit Discount Allowed expense account
+      // Handle discount — debit Discount Allowed expense account.
+      // Look up strictly by code '6400' so a sale and its refund always use the
+      // SAME discount account (the previous `OR subtype='other_expense'` could
+      // resolve to a different account than RefundService, leaving the discount
+      // account unreconciled after a refund).
       if (discountAmount > 0) {
-        const discountAccount = this.db.prepare("SELECT id FROM accounts WHERE code = '6400' OR subtype = 'other_expense' LIMIT 1").get() as any;
+        const discountAccount = this.db.prepare("SELECT id FROM accounts WHERE code = '6400' LIMIT 1").get() as any;
         if (discountAccount) {
           lines.push({
             accountId: discountAccount.id,
@@ -975,6 +1027,10 @@ export class AccountingService {
         return result;
       }
 
+      if (data.contactId) {
+        this.settleContactInvoices(data.contactId, data.amount);
+      }
+
       this.audit.logAction({
         userId: this.currentUser?.id,
         action: 'RECEIVE_MONEY',
@@ -1050,6 +1106,10 @@ export class AccountingService {
 
       if (!result.success) {
         return result;
+      }
+
+      if (data.contactId) {
+        this.settleContactInvoices(data.contactId, data.amount);
       }
 
       this.audit.logAction({
@@ -1239,16 +1299,87 @@ export class AccountingService {
 
       query += ' ORDER BY t.date DESC, t.created_at DESC';
 
-      if (filters?.limit) {
-        query += ' LIMIT ?';
-        params.push(filters.limit);
-      }
+      const finalLimit = filters?.limit ?? 500;
+      query += ' LIMIT ?';
+      params.push(finalLimit);
 
       const transactions = this.db.prepare(query).all(...params);
       return transactions.map((t: any) => this.mapTransactionFromDb(t));
     } catch (error) {
       console.error('Get transactions error:', error);
       return [];
+    }
+  }
+
+  getTransactionsPaginated(
+    filters?: { type?: string; startDate?: string; endDate?: string; contactId?: number; search?: string },
+    page: number = 1,
+    limit: number = 50
+  ): { transactions: Transaction[]; total: number } {
+    try {
+      const offset = (page - 1) * limit;
+      const safeLimit = Math.min(Math.max(1, limit), 200);
+      const params: any[] = [];
+      const countParams: any[] = [];
+
+      let whereClause = ' WHERE t.is_void = 0';
+
+      if (filters?.type) {
+        whereClause += ' AND t.type = ?';
+        params.push(filters.type);
+        countParams.push(filters.type);
+      }
+
+      if (filters?.startDate) {
+        whereClause += ' AND t.date >= ?';
+        params.push(filters.startDate);
+        countParams.push(filters.startDate);
+      }
+
+      if (filters?.endDate) {
+        whereClause += ' AND t.date <= ?';
+        params.push(filters.endDate);
+        countParams.push(filters.endDate);
+      }
+
+      if (filters?.contactId) {
+        whereClause += ' AND t.contact_id = ?';
+        params.push(filters.contactId);
+        countParams.push(filters.contactId);
+      }
+
+      if (filters?.search && filters.search.trim()) {
+        const pattern = `%${filters.search.trim()}%`;
+        whereClause += ' AND (t.transaction_no LIKE ? OR t.description LIKE ? OR c.name LIKE ?)';
+        params.push(pattern, pattern, pattern);
+        countParams.push(pattern, pattern, pattern);
+      }
+
+      const countQuery = `
+        SELECT COUNT(*) AS cnt 
+        FROM transactions t
+        LEFT JOIN contacts c ON t.contact_id = c.id
+        ${whereClause}
+      `;
+      const total = (this.db.prepare(countQuery).get(...countParams) as any).cnt;
+
+      const selectQuery = `
+        SELECT 
+          t.*,
+          c.name as contact_name
+        FROM transactions t
+        LEFT JOIN contacts c ON t.contact_id = c.id
+        ${whereClause}
+        ORDER BY t.date DESC, t.created_at DESC
+        LIMIT ? OFFSET ?
+      `;
+      params.push(safeLimit, offset);
+
+      const transactions = this.db.prepare(selectQuery).all(...params);
+      return { transactions: transactions.map((t: any) => this.mapTransactionFromDb(t)), total };
+    } catch (error) {
+      console.error('Get transactions paginated error:', error);
+      return { transactions: [], total: 0 };
     }
   }
 
@@ -1374,7 +1505,41 @@ export class AccountingService {
 
 
 
-  // logAudit removed - replaced by AuditService
+  private settleContactInvoices(contactId: number, paymentAmount: number): void {
+    if (!contactId || paymentAmount <= 0) return;
+
+    try {
+      const unpaidInvoices = this.db.prepare(`
+        SELECT id, total_amount, balance_due, amount_paid
+        FROM invoices
+        WHERE contact_id = ? AND payment_status IN ('unpaid', 'partial') AND is_void = 0
+        ORDER BY date ASC, id ASC
+      `).all(contactId) as any[];
+
+      let remaining = paymentAmount;
+      for (const inv of unpaidInvoices) {
+        if (remaining <= 0) break;
+        const currentDue = Number(inv.balance_due ?? inv.total_amount ?? 0);
+        if (currentDue <= 0) continue;
+
+        const settle = Math.min(remaining, currentDue);
+        const newDue = Number((currentDue - settle).toFixed(2));
+        const currentPaid = Number(inv.amount_paid || 0);
+        const newPaid = Number((currentPaid + settle).toFixed(2));
+        const newStatus = newDue <= 0.001 ? 'paid' : 'partial';
+
+        this.db.prepare(`
+          UPDATE invoices
+          SET balance_due = ?, amount_paid = ?, payment_status = ?
+          WHERE id = ?
+        `).run(newDue, newPaid, newStatus, inv.id);
+
+        remaining = Number((remaining - settle).toFixed(2));
+      }
+    } catch (err) {
+      console.error('Error settling contact invoices:', err);
+    }
+  }
 
   private mapContactFromDb(row: any): Contact {
     return {

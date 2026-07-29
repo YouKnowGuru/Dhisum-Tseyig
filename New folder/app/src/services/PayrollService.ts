@@ -112,18 +112,28 @@ export class PayrollService {
             }
           ];
 
-          // Add liability lines for deductions if they exist
-          if (pfAmount > 0 && pfAccount) {
-            lines.push({ accountId: pfAccount.id, description: `PF Deduction - ${employee.name}`, debitAmount: 0, creditAmount: pfAmount });
+          // Add liability lines for deductions. BUG FIX: if a deduction applies
+          // (amount > 0) but its liability account is missing, we must NOT silently
+          // drop the line — that would underpay the liability while the journal
+          // still balanced, leaving the deduction unrecorded. Throw so the whole
+          // payroll run rolls back and the chart of accounts can be fixed.
+          const requireDeductionAccount = (account: any, label: string, code: string): number => {
+            if (!account) {
+              throw new Error(`Payroll setup error: ${label} liability account (${code}) not found, but a ${label} deduction applies to ${employee.name}. Add the account to your chart of accounts.`);
+            }
+            return account.id;
+          };
+          if (pfAmount > 0) {
+            lines.push({ accountId: requireDeductionAccount(pfAccount, 'PF', '2400'), description: `PF Deduction - ${employee.name}`, debitAmount: 0, creditAmount: pfAmount });
           }
-          if (tdsAmount > 0 && tdsAccount) {
-            lines.push({ accountId: tdsAccount.id, description: `TDS Deduction - ${employee.name}`, debitAmount: 0, creditAmount: tdsAmount });
+          if (tdsAmount > 0) {
+            lines.push({ accountId: requireDeductionAccount(tdsAccount, 'TDS', '2500'), description: `TDS Deduction - ${employee.name}`, debitAmount: 0, creditAmount: tdsAmount });
           }
-          if (gisAmount > 0 && gisAccount) {
-            lines.push({ accountId: gisAccount.id, description: `GIS Deduction - ${employee.name}`, debitAmount: 0, creditAmount: gisAmount });
+          if (gisAmount > 0) {
+            lines.push({ accountId: requireDeductionAccount(gisAccount, 'GIS', '2600'), description: `GIS Deduction - ${employee.name}`, debitAmount: 0, creditAmount: gisAmount });
           }
-          if (hcAmount > 0 && hcAccount) {
-            lines.push({ accountId: hcAccount.id, description: `HC Deduction - ${employee.name}`, debitAmount: 0, creditAmount: hcAmount });
+          if (hcAmount > 0) {
+            lines.push({ accountId: requireDeductionAccount(hcAccount, 'HC', '2700'), description: `HC Deduction - ${employee.name}`, debitAmount: 0, creditAmount: hcAmount });
           }
 
           // Final credit to cash/bank (Net Salary)

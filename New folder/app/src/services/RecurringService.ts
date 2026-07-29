@@ -5,6 +5,12 @@ import { AccountingEngineService } from './AccountingEngineService';
 import type { EngineEvent, EngineTransactionLine } from './AccountingEngineService';
 import { AutomationService } from './AutomationService';
 import { AuditService } from './AuditService';
+import { format } from 'date-fns';
+
+/** Local (not UTC) YYYY-MM-DD for a Date — the app operates in local business time. */
+function localDateStr(d: Date): string {
+  return format(d, 'yyyy-MM-dd');
+}
 
 export class RecurringService {
   private db: Database.Database;
@@ -105,7 +111,10 @@ export class RecurringService {
 
   processDueToday(): ApiResponse<number> {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      // BUG FIX: use LOCAL date, not UTC (toISOString). Near midnight in UTC+6
+      // (Bhutan) the UTC date is still "yesterday", so recurring entries due
+      // today would not fire — or would fire a day late. Use local business date.
+      const today = localDateStr(new Date());
 
       // Get all active recurring transactions due today or earlier
       // Exclude those that have reached max_occurrences or passed end_date
@@ -142,42 +151,42 @@ export class RecurringService {
               continue;
             }
 
-            // Calculate next date using date-fns for proper month-end handling
+            // Calculate next date with correct month-end handling and LOCAL
+            // (not UTC) output. Parse the YYYY-MM-DD as local midnight so the
+            // day/month arithmetic happens in local business time.
             const calcNextDate = (currentDateStr: string, freq: string): string => {
-              const d = new Date(currentDateStr);
+              const [y, m, day] = currentDateStr.split('-').map(Number);
+              const d = new Date(y, (m || 1) - 1, day || 1); // local midnight
               switch (freq) {
-                case 'daily': d.setDate(d.getDate() + 1); break;
-                case 'weekly': d.setDate(d.getDate() + 7); break;
+                case 'daily': d.setDate(d.getDate() + 1); return localDateStr(d);
+                case 'weekly': d.setDate(d.getDate() + 7); return localDateStr(d);
                 case 'monthly': {
-                  // Handle month-end edge cases (Jan 31 -> Feb 28)
-                  const nextMonth = new Date(d);
-                  nextMonth.setMonth(nextMonth.getMonth() + 1);
-                  // If day changed (e.g., 31 -> 3), use last day of previous month
-                  if (nextMonth.getDate() !== d.getDate()) {
-                    nextMonth.setDate(0); // Last day of previous month
+                  // Last-day-of-month anchor: adding a month to Jan 31 overflows
+                  // to Mar 3; detect that and clamp to the last day of the intended
+                  // month (Feb 28/29).
+                  const target = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate());
+                  if (target.getDate() !== d.getDate()) {
+                    return localDateStr(new Date(d.getFullYear(), d.getMonth() + 2, 0));
                   }
-                  return nextMonth.toISOString().split('T')[0];
+                  return localDateStr(target);
                 }
                 case 'quarterly': {
-                  const nextQuarter = new Date(d);
-                  nextQuarter.setMonth(nextQuarter.getMonth() + 3);
-                  if (nextQuarter.getDate() !== d.getDate()) {
-                    nextQuarter.setDate(0);
+                  const target = new Date(d.getFullYear(), d.getMonth() + 3, d.getDate());
+                  if (target.getDate() !== d.getDate()) {
+                    return localDateStr(new Date(d.getFullYear(), d.getMonth() + 4, 0));
                   }
-                  return nextQuarter.toISOString().split('T')[0];
+                  return localDateStr(target);
                 }
                 case 'yearly': {
-                  const nextYear = new Date(d);
-                  nextYear.setFullYear(nextYear.getFullYear() + 1);
-                  if (nextYear.getDate() !== d.getDate()) {
-                    // Feb 29 on non-leap year → go to Feb 28 (same month, last day)
-                    nextYear.setDate(0);
+                  const target = new Date(d.getFullYear() + 1, d.getMonth(), d.getDate());
+                  if (target.getDate() !== d.getDate()) {
+                    // Feb 29 -> Feb 28 on non-leap years (same month, last day).
+                    return localDateStr(new Date(d.getFullYear() + 1, d.getMonth() + 1, 0));
                   }
-                  return nextYear.toISOString().split('T')[0];
+                  return localDateStr(target);
                 }
-                default: return d.toISOString().split('T')[0];
+                default: return localDateStr(d);
               }
-              return d.toISOString().split('T')[0];
             };
 
             // 1. Prepare Accounting Engine Event

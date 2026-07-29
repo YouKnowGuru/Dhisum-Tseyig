@@ -135,10 +135,14 @@ const secureInventory = {
   },
 
   /**
-   * Get all inventory items
+   * Get inventory items (supports pagination: { page, limit, search })
    */
-  getItems: async () => {
-    const result = await ipcRenderer.invoke('inventory:getItems');
+  getItems: async (params?: { page?: number; limit?: number; search?: string }) => {
+    const result = await ipcRenderer.invoke('inventory:getItems', params);
+    // Paginated result comes back directly, wrap it for the frontend
+    if (result && typeof result === 'object' && 'items' in result) {
+      return { success: true, data: result };
+    }
     return { success: true, data: result };
   },
 
@@ -361,11 +365,17 @@ const secureContacts = {
   },
 
   /**
-   * Get all contacts
+   * Get all contacts (supports pagination: { type, page, limit, search })
    */
-  getAll: async (type?: 'customer' | 'supplier') => {
-    const validType = type && ['customer', 'supplier'].includes(type) ? type : undefined;
-    const result = await ipcRenderer.invoke('contacts:getAll', validType);
+  getAll: async (params?: { type?: 'customer' | 'supplier'; page?: number; limit?: number; search?: string } | string) => {
+    // Legacy: plain string type passed (e.g. from ReportsPage)
+    if (typeof params === 'string') {
+      const validType = ['customer', 'supplier'].includes(params) ? params : undefined;
+      const result = await ipcRenderer.invoke('contacts:getAll', validType);
+      return { success: true, data: result };
+    }
+    // Paginated object form
+    const result = await ipcRenderer.invoke('contacts:getAll', params);
     return { success: true, data: result };
   },
 
@@ -1284,8 +1294,13 @@ const secureHeldCarts = {
 };
 
 const secureEmailInvoice = {
-  send: async (data: { customerEmail: string; invoiceNo: string; totalAmount: number; businessName: string }) =>
-    ipcRenderer.invoke('emailInvoice:send', data),
+  send: async (data: any) => {
+    const raw = await ipcRenderer.invoke('emailInvoice:send', data);
+    if (raw && raw.ok === false && raw.data) {
+      return { success: false, message: raw.data.error || 'Failed to send invoice email' };
+    }
+    return raw;
+  },
 };
 
 const secureApp = {

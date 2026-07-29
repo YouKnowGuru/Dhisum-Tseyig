@@ -125,21 +125,11 @@ export async function POST(req: NextRequest) {
         activeSessions: [],
       })
     } catch (error: any) {
-      // Handle duplicate key error (race condition protection)
+      // Handle duplicate key error (race condition protection).
+      // SECURITY: return the SAME generic message regardless of which field
+      // collided (email vs username) to prevent account enumeration — the
+      // previous branch revealed whether a specific email or username exists.
       if (error.code === 11000) {
-        // Extract which field was duplicated
-        const errorMsg = error.message || ''
-        if (errorMsg.includes('email')) {
-          return NextResponse.json(
-            { success: false, error: 'An account with this email already exists.' },
-            { status: 409 }
-          )
-        } else if (errorMsg.includes('username')) {
-          return NextResponse.json(
-            { success: false, error: 'Username is already taken.' },
-            { status: 409 }
-          )
-        }
         return NextResponse.json(
           { success: false, error: 'An account with these details already exists.' },
           { status: 409 }

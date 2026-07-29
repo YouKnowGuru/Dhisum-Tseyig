@@ -21,9 +21,19 @@ export class ExpenseService {
   }
 
   generateExpenseNo(): string {
+    // Probe for a free number and fall back to a random suffix on collision so
+    // concurrent inserts can't produce a duplicate (which would abort the
+    // expense via the UNIQUE constraint).
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const crypto = require('crypto');
     const last = this.db.prepare("SELECT expense_no FROM expenses ORDER BY id DESC LIMIT 1").get() as any;
-    const num = last ? (parseInt(last.expense_no.split('-')[1]) || 0) + 1 : 1;
-    return `EX-${String(num).padStart(5, '0')}`;
+    const base = last ? (parseInt(last.expense_no.split('-')[1]) || 0) + 1 : 1;
+    const checkExisting = this.db.prepare('SELECT 1 FROM expenses WHERE expense_no = ?');
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const candidate = `EX-${String(base + attempt).padStart(5, '0')}`;
+      if (!checkExisting.get(candidate)) return candidate;
+    }
+    return `EX-${String(base).padStart(5, '0')}-${crypto.randomInt(0, 10000).toString().padStart(4, '0')}`;
   }
 
   create(data: CreateExpenseData, userId: number = 1): ApiResponse<{ id: number; transactionId: number }> {
@@ -52,6 +62,12 @@ export class ExpenseService {
         }
       ];
 
+      // BUG FIX: insert the expense record INSIDE the engine's transaction via
+      // extraWrites, so the journal and the expenses row commit or roll back
+      // together. Previously the engine committed its journal first and the
+      // expense insert ran separately — a failure left a posted payment with no
+      // matching expense record.
+      let expenseId = 0;
       const event: EngineEvent = {
         type: 'payment',
         date: dateStr,
@@ -63,10 +79,23 @@ export class ExpenseService {
         discountAmount: 0,
         netAmount: data.amount,
         lines,
-        createdBy: userId
+        createdBy: userId,
+        extraWrites: (transactionId) => {
+          const result = this.db.prepare(`
+            INSERT INTO expenses (
+              expense_no, date, category, amount, payment_mode, 
+              vendor, description, transaction_id, account_id
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).run(
+            expenseNo, dateStr, data.category, data.amount, paymentMode,
+            data.vendor || null, data.description || null, transactionId, data.accountId
+          );
+          expenseId = result.lastInsertRowid as number;
+        }
       };
 
-      // 2. Execute via Accounting Engine
+      // 2. Execute via Accounting Engine (journal + expense row atomic)
       const engineResult = this.engine.executePipeline(event);
       if (!engineResult.success) {
         return { success: false, message: engineResult.message || 'Accounting pipeline failed' };
@@ -74,30 +103,18 @@ export class ExpenseService {
 
       const transactionId = engineResult.data.transactionId;
 
-      // 3. Save to Expenses Table
-      const result = this.db.prepare(`
-        INSERT INTO expenses (
-          expense_no, date, category, amount, payment_mode, 
-          vendor, description, transaction_id, account_id
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        expenseNo, dateStr, data.category, data.amount, paymentMode,
-        data.vendor || null, data.description || null, transactionId, data.accountId
-      );
-
       this.audit.logAction({
         userId,
         action: 'EXPENSE_CREATE',
         entityType: 'expenses',
-        entityId: result.lastInsertRowid as number,
+        entityId: expenseId,
         newValues: { expenseNo, category: data.category, amount: data.amount, paymentMode }
       });
 
       return {
         success: true,
         message: 'Expense recorded in ledger',
-        data: { id: result.lastInsertRowid as number, transactionId }
+        data: { id: expenseId, transactionId }
       };
     } catch (error: any) {
       console.error('Expense create error:', error);

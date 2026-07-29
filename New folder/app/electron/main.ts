@@ -844,12 +844,19 @@ ipcMain.handle('inventory:createItem', createSecureIpcHandler(
 ));
 
 ipcMain.handle('inventory:addStock', createSecureIpcHandler(
-  async (_event, stockData) => inventoryService.addStock(stockData),
+  // addStockSafe returns a clean success:false instead of throwing through IPC
+  // when accounting validation fails (the throw is what guarantees rollback).
+  async (_event, stockData) => inventoryService.addStockSafe(stockData),
   { requireAuth: true, validator: StockMovementSchema }
 ));
 
 ipcMain.handle('inventory:getItems', createSecureIpcHandler(
-  async () => inventoryService.getAllItems(),
+  async (_event, params?: { page?: number; limit?: number; search?: string }) => {
+    if (params && (params.page !== undefined || params.limit !== undefined || params.search !== undefined)) {
+      return inventoryService.getItemsPaginated(params.page ?? 1, params.limit ?? 50, params.search ?? '');
+    }
+    return inventoryService.getAllItems();
+  },
   { requireAuth: true }
 ));
 
@@ -936,10 +943,23 @@ ipcMain.handle('inventory:deleteUnit', createSecureIpcHandler(
 // ============================================
 
 ipcMain.handle('contacts:getAll', createSecureIpcHandler(
-  async (_event, type) => {
-    if (type && !['customer', 'supplier'].includes(type)) {
-      return { success: false, message: 'Invalid contact type' };
+  async (_event, params?: { type?: 'customer' | 'supplier'; page?: number; limit?: number; search?: string } | string) => {
+    if (typeof params === 'string') {
+      const type = params;
+      if (type && !['customer', 'supplier'].includes(type)) {
+        return { success: false, message: 'Invalid contact type' };
+      }
+      return accountingService.getContacts(type as any);
     }
+
+    if (params && (params.page !== undefined || params.limit !== undefined || params.search !== undefined)) {
+      if (params.type && !['customer', 'supplier'].includes(params.type)) {
+        return { success: false, message: 'Invalid contact type' };
+      }
+      return accountingService.getContactsPaginated(params.type, params.page ?? 1, params.limit ?? 50, params.search ?? '');
+    }
+
+    const type = params?.type;
     return accountingService.getContacts(type);
   },
   { requireAuth: true }
@@ -991,7 +1011,7 @@ ipcMain.handle('accounts:getAll', createSecureIpcHandler(
                  0
                ) as balance
         FROM accounts a
-        WHERE a.is_active = 1
+        WHERE (a.is_active IS NULL OR a.is_active = 1)
         ORDER BY a.code
       `).all();
       return { success: true, data: accounts };
@@ -1038,7 +1058,12 @@ ipcMain.handle('transactions:transfer', createSecureIpcHandler(
 ));
 
 ipcMain.handle('transactions:getAll', createSecureIpcHandler(
-  async (_event, filters) => accountingService.getTransactions(filters),
+  async (_event, filters?: { type?: string; startDate?: string; endDate?: string; contactId?: number; limit?: number; page?: number; search?: string }) => {
+    if (filters && (filters.page !== undefined || filters.search !== undefined)) {
+      return accountingService.getTransactionsPaginated(filters, filters.page ?? 1, filters.limit ?? 50);
+    }
+    return accountingService.getTransactions(filters);
+  },
   { requireAuth: true }
 ));
 

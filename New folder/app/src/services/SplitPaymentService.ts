@@ -188,7 +188,13 @@ export class SplitPaymentService {
       // Determine primary payment mode for transaction
       const primaryMode = payments[0].mode;
 
-      // Create engine event
+      // Create engine event.
+      // BUG FIX: pass invoiceDetails so the engine generates the invoice AND its
+      // invoice_items inside the SAME transaction as the journal + stock deduction
+      // (previously the invoice was inserted by hand AFTER the engine committed,
+      // which (a) was non-atomic — a crash left a sale with no invoice — and
+      // (b) wrote NO invoice_items, so split sales were missing from all
+      // item-level / top-items reports). balance_due is 0 for a fully-paid split.
       const event: EngineEvent = {
         type: 'sale',
         date: dateStr,
@@ -202,10 +208,15 @@ export class SplitPaymentService {
         lines,
         items: engineItems,
         taxType,
-        reference: `SPLIT-${Date.now().toString(36).toUpperCase()}`
+        reference: `SPLIT-${Date.now().toString(36).toUpperCase()}`,
+        invoiceDetails: {
+          dueDate: null,
+          paymentStatus: 'paid',
+          notes: notes || null
+        }
       };
 
-      // Execute via Accounting Engine
+      // Execute via Accounting Engine (invoice + invoice_items created atomically)
       const engineResult = this.engine.executePipeline(event);
 
       if (!engineResult.success) {
@@ -213,18 +224,18 @@ export class SplitPaymentService {
       }
 
       const transactionId = (engineResult.data as any)?.transactionId;
+      const invoiceId = (engineResult.data as any)?.invoiceId;
 
-      // Create invoice with unique number (timestamp + random suffix to prevent collisions)
-      const invoiceNo = `INV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-      this.db.prepare(`
-        INSERT INTO invoices (invoice_no, transaction_id, contact_id, subtotal, gst_amount, discount_amount, total_amount, payment_status, balance_due, date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'paid', 0, ?)
-      `).run(invoiceNo, transactionId, customerId || null, subtotal, totalGst, discountAmount, netAmount, dateStr);
+      // Fetch the engine-generated invoice number for the response / audit log.
+      const invoiceRow = invoiceId
+        ? this.db.prepare('SELECT invoice_no FROM invoices WHERE id = ?').get(invoiceId) as any
+        : null;
+      const invoiceNo = invoiceRow?.invoice_no || `TXN-${transactionId}`;
 
       this.audit.logAction({
         action: 'SPLIT_SALE_CREATE',
         entityType: 'invoices',
-        entityId: transactionId,
+        entityId: invoiceId || transactionId,
         newValues: { invoiceNo, customerId, transactionId, subtotal, gstAmount: totalGst, discountAmount, netAmount, payments: payments.map(p => ({ mode: p.mode, amount: p.amount })), taxType }
       });
 
