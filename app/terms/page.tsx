@@ -1,11 +1,14 @@
+import type { Metadata } from 'next'
+import { createMetadata } from '@/lib/seo-config'
 import { FileCheck, Activity, Users, AlertCircle, Ban, Scale, CreditCard, RefreshCw, Shield, AlertTriangle, FileText, Globe, Zap } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
-export const metadata = {
-    title: 'Terms of Service - Jinda',
-    description: 'Terms and conditions for using Jinda POS software. Learn about acceptable use, intellectual property, payments, warranties, liability, and governing law.',
-}
+export const metadata: Metadata = createMetadata({
+    path: '/terms',
+    title: 'Terms of Service — Usage Rules for Jinda POS Software',
+    description: 'Terms and conditions for using Jinda POS software in Bhutan. Learn about acceptable use, intellectual property, payments, warranties, liability, and governing Bhutanese law.',
+})
 
 interface Section {
     icon: typeof FileCheck

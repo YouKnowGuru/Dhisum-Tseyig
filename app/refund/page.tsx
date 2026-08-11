@@ -1,11 +1,14 @@
+import type { Metadata } from 'next'
+import { createMetadata } from '@/lib/seo-config'
 import { Undo2, XCircle, CreditCard, RotateCcw, AlertTriangle, HelpCircle, Clock, Ban, FileCheck, Zap, RefreshCcw, Shield } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
-export const metadata = {
-    title: 'Refund Policy - Jinda',
-    description: 'Refund and cancellation policy for Jinda POS software. Learn about eligibility, processing times, non-refundable items, and how to request a refund.',
-}
+export const metadata: Metadata = createMetadata({
+    path: '/refund',
+    title: 'Refund Policy — 14-Day Money Back Guarantee',
+    description: 'Refund and cancellation policy for Jinda POS software. 7-day free trial available. 14-day refund eligibility for paid licenses. Fair and transparent refund process.',
+})
 
 interface Section {
     icon: typeof Undo2

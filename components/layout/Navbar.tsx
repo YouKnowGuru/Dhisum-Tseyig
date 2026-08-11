@@ -36,7 +36,7 @@ export default function Navbar() {
           <div className="relative h-14 w-14 flex items-center justify-center rounded-full bg-white shadow-xl ring-4 ring-bhutan-maroon/10 border-2 border-bhutan-maroon/20 dark:bg-slate-900 dark:ring-bhutan-gold/10 dark:border-bhutan-gold/20 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 ease-out overflow-hidden">
             <Image
               src="/images/logo.png"
-              alt="Jinda Logo"
+              alt="Jinda POS — Best POS Software & Tally Alternative in Bhutan"
               width={56}
               height={56}
               className="object-cover rounded-full p-1"

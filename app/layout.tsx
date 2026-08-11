@@ -7,7 +7,7 @@ import ScrollToTop from '@/components/ScrollToTop'
 import ThemeToggle from '@/components/ThemeToggle'
 import ChatWidget from '@/components/chatbot/ChatWidget'
 import ConsentBanner from '@/components/ConsentBanner'
-import { OrganizationJsonLd, WebSiteJsonLd, SoftwareApplicationJsonLd } from '@/components/seo/JsonLd'
+import { OrganizationJsonLd, WebSiteJsonLd, SoftwareApplicationJsonLd, LocalBusinessJsonLd } from '@/components/seo/JsonLd'
 import { createMetadata } from '@/lib/seo-config'
 
 const inter = Inter({
@@ -56,6 +56,7 @@ export default function RootLayout({
         <OrganizationJsonLd />
         <WebSiteJsonLd />
         <SoftwareApplicationJsonLd />
+        <LocalBusinessJsonLd />
 
         <div className="flex min-h-screen flex-col" suppressHydrationWarning>
           <Navbar />

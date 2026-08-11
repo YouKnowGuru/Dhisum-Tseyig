@@ -1,11 +1,14 @@
+import type { Metadata } from 'next'
+import { createMetadata } from '@/lib/seo-config'
 import { Key, Laptop, LifeBuoy, RefreshCcw, UserPlus, Zap, Shield, Ban, Clock, FileText, ArrowRightLeft, AlertTriangle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
-export const metadata = {
-    title: 'License Agreement - Jinda',
-    description: 'End User License Agreement for Jinda POS software. Learn about activation, user limits, renewals, transfers, termination, and anti-piracy rules.',
-}
+export const metadata: Metadata = createMetadata({
+    path: '/license',
+    title: 'License Agreement — Activation, Transfers & Renewals',
+    description: 'End User License Agreement for Jinda POS software. Learn about license activation, user limits, computer binding, renewals, transfers, and anti-piracy rules.',
+})
 
 interface Section {
     icon: typeof Key

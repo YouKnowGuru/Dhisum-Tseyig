@@ -30,12 +30,12 @@ const footerLinks = {
     { href: '/docs', label: 'Documentation' },
   ],
   modules: [
-    { href: '/features', label: 'POS Terminal' },
+    { href: '/best-pos-bhutan', label: 'Best POS in Bhutan' },
+    { href: '/tally-alternative-bhutan', label: 'Tally Alternative' },
+    { href: '/gst-filing-software-bhutan', label: 'Bhutan GST Filing' },
     { href: '/features', label: 'Inventory Hub' },
-    { href: '/features', label: 'GST Core' },
     { href: '/features', label: 'Accounting' },
-    { href: '/features', label: 'Reports' },
-    { href: '/features', label: 'Payroll' },
+    { href: '/features', label: 'Financial Reports' },
   ],
   support: [
     { href: '/contact', label: 'Contact Us' },

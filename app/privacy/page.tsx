@@ -1,11 +1,14 @@
+import type { Metadata } from 'next'
+import { createMetadata } from '@/lib/seo-config'
 import { Shield, Lock, Eye, FileText, Database, Bell, Cookie, Server, Trash2, Users, Globe, Baby, Brain } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
-export const metadata = {
-    title: 'Privacy Policy - Jinda',
-    description: 'How Jinda POS handles your data. Your business data stays on your computer. Learn about data collection, encryption, your rights, and more.',
-}
+export const metadata: Metadata = createMetadata({
+    path: '/privacy',
+    title: 'Privacy Policy — How Jinda POS Protects Your Data',
+    description: 'Learn how Jinda POS handles your business data. All data stays on your computer. No tracking, no cloud storage of sales data. Privacy-first POS software for Bhutan.',
+})
 
 interface Section {
     icon: typeof Shield

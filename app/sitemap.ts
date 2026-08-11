@@ -2,84 +2,96 @@ import type { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://jindapos.com'
-  const now = new Date()
+  const lastMod = new Date('2026-08-11')
 
   return [
     {
       url: baseUrl,
-      lastModified: now,
+      lastModified: lastMod,
       changeFrequency: 'daily',
       priority: 1.0,
     },
     {
+      url: `${baseUrl}/best-pos-bhutan`,
+      lastModified: lastMod,
+      changeFrequency: 'weekly',
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/tally-alternative-bhutan`,
+      lastModified: lastMod,
+      changeFrequency: 'weekly',
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/gst-filing-software-bhutan`,
+      lastModified: lastMod,
+      changeFrequency: 'weekly',
+      priority: 0.95,
+    },
+    {
       url: `${baseUrl}/features`,
-      lastModified: now,
+      lastModified: lastMod,
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/pricing`,
-      lastModified: now,
+      lastModified: lastMod,
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/download`,
-      lastModified: now,
+      lastModified: lastMod,
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/about`,
-      lastModified: now,
+      lastModified: lastMod,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
       url: `${baseUrl}/contact`,
-      lastModified: now,
+      lastModified: lastMod,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
       url: `${baseUrl}/docs`,
-      lastModified: now,
+      lastModified: lastMod,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
       url: `${baseUrl}/security`,
-      lastModified: now,
+      lastModified: lastMod,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/updates`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.6,
-    },
-    {
       url: `${baseUrl}/privacy`,
-      lastModified: now,
+      lastModified: lastMod,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
       url: `${baseUrl}/terms`,
-      lastModified: now,
+      lastModified: lastMod,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
       url: `${baseUrl}/refund`,
-      lastModified: now,
+      lastModified: lastMod,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
       url: `${baseUrl}/license`,
-      lastModified: now,
+      lastModified: lastMod,
       changeFrequency: 'yearly',
       priority: 0.3,
     },

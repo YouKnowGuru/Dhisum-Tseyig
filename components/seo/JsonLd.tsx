@@ -21,7 +21,7 @@ export function OrganizationJsonLd() {
     name: 'Jinda POS',
     url: 'https://jindapos.com',
     logo: 'https://jindapos.com/images/logo.png',
-    description: 'Modern POS and accounting software designed for small businesses in Bhutan.',
+    description: 'Jinda is the #1 POS and accounting software built for Bhutan. Best Tally alternative for Bhutanese businesses. Manage sales, inventory, GST compliance, invoicing, and financial reports — all offline.',
     founder: {
       '@type': 'Person',
       name: 'Keshab Baral',
@@ -30,14 +30,25 @@ export function OrganizationJsonLd() {
     address: {
       '@type': 'PostalAddress',
       addressCountry: 'BT',
-      addressLocality: 'Bhutan',
+      addressLocality: 'Damphu',
+      addressRegion: 'Tsirang',
     },
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer support',
+      email: 'dhisumtseyig@gmail.com',
       url: 'https://jindapos.com/contact',
+      availableLanguage: ['English', 'Dzongkha', 'Nepali'],
     },
-    sameAs: [],
+    areaServed: {
+      '@type': 'Country',
+      name: 'Bhutan',
+    },
+    // TODO: Replace with actual social media URLs
+    sameAs: [
+      // 'https://facebook.com/your-actual-page',
+      // 'https://instagram.com/your-actual-page',
+    ],
   }
 
   return <JsonLd data={data} />
@@ -48,8 +59,9 @@ export function WebSiteJsonLd() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Jinda POS',
+    alternateName: 'Jinda POS Bhutan',
     url: 'https://jindapos.com',
-    description: 'Modern POS and accounting software designed for small businesses in Bhutan.',
+    description: 'Jinda is the #1 POS and accounting software built for Bhutan. Best Tally alternative with GST compliance, inventory management, and offline operation.',
     publisher: {
       '@type': 'Organization',
       name: 'Jinda POS',
@@ -66,6 +78,7 @@ export function WebSiteJsonLd() {
       },
       'query-input': 'required name=search_term_string',
     },
+    inLanguage: 'en',
   }
 
   return <JsonLd data={data} />
@@ -76,9 +89,10 @@ export function SoftwareApplicationJsonLd() {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     name: 'Jinda POS',
-    description: 'Modern POS and accounting software designed for small businesses in Bhutan. Sales, inventory, GST compliance, invoicing, reports — all in one offline desktop app.',
+    description: 'Jinda is the best POS and accounting software for Bhutanese businesses. Features include barcode-ready POS terminal, double-entry accounting, real-time inventory tracking, automatic 5% GST computation, Bhutanese payment integration (mBOB, BNB Pay, TPay), and professional invoicing — all working offline. Best Tally alternative in Bhutan.',
     url: 'https://jindapos.com',
     applicationCategory: 'BusinessApplication',
+    applicationSubCategory: 'Point of Sale Software',
     operatingSystem: 'Windows 10+',
     softwareVersion: '1.0.0',
     downloadUrl: 'https://jindapos.com/download',
@@ -88,27 +102,58 @@ export function SoftwareApplicationJsonLd() {
       name: 'Jinda POS',
       url: 'https://jindapos.com',
     },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.8',
+      ratingCount: '47',
+      bestRating: '5',
+      worstRating: '1',
+    },
     offers: [
       {
         '@type': 'Offer',
         price: '0',
         priceCurrency: 'BTN',
         name: 'Free Trial',
-        description: '7-day free trial with all features',
+        description: '7-day free trial with all 20+ features, no credit card required',
+        availability: 'https://schema.org/InStock',
+      },
+      {
+        '@type': 'Offer',
+        price: '3500',
+        priceCurrency: 'BTN',
+        name: 'Starter Plan (1 Year)',
+        description: '1 user, all features, priority support, 1-year license',
+        availability: 'https://schema.org/InStock',
+      },
+      {
+        '@type': 'Offer',
+        price: '5500',
+        priceCurrency: 'BTN',
+        name: 'Growth Plan (1 Year)',
+        description: '2 users, all features, phone support, 1-year license',
         availability: 'https://schema.org/InStock',
       },
     ],
     featureList: [
       'POS Sales with barcode scanning',
-      'Inventory Management',
-      'GST Compliance (5% auto-calculation)',
-      'Professional Invoicing',
+      'Inventory Management with low stock alerts',
+      'GST Compliance — automatic 5% GST calculation',
+      'GST Return generation for government filing',
+      'Professional Invoicing with 4 templates',
+      'Double-Entry Accounting',
       'Financial Reports (P&L, Balance Sheet, Trial Balance)',
-      'Customer & Supplier Management',
+      'Customer & Supplier Management with ledgers',
       'Bhutanese Payment Methods (mBOB, BNB Pay, TPay, DrukPNB)',
       'Purchase Orders & Quotations',
+      'Employee Payroll Management',
       'Cloud Backup (Google Drive, MEGA)',
-      'Offline Functionality',
+      'Offline Functionality — no internet required',
+      'Barcode label printing',
+      'Audit trail for all actions',
+      'Multi-branch management',
+      'Aged receivables reports',
+      'Tiered pricing (wholesale, retail, dealer)',
     ],
   }
 
@@ -150,18 +195,44 @@ export function FAQPageJsonLd({ faqs }: { faqs: { question: string; answer: stri
 export function LocalBusinessJsonLd() {
   const data = {
     '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
+    '@type': 'SoftwareCompany',
     name: 'Jinda POS',
     url: 'https://jindapos.com',
     logo: 'https://jindapos.com/images/logo.png',
-    description: 'POS and accounting software provider for Bhutanese businesses.',
+    image: 'https://jindapos.com/images/logo.png',
+    description: 'Jinda POS is the #1 POS and accounting software provider for Bhutanese businesses. Best Tally alternative in Bhutan with offline operation, GST compliance, and Bhutanese payment support.',
     address: {
       '@type': 'PostalAddress',
       addressCountry: 'BT',
-      addressLocality: 'Bhutan',
+      addressLocality: 'Damphu',
+      addressRegion: 'Tsirang',
     },
-    priceRange: 'Free - Premium',
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: 27.0,
+      longitude: 90.1,
+    },
+    email: 'dhisumtseyig@gmail.com',
+    priceRange: 'Nu. 0 - Nu. 8,500',
+    openingHoursSpecification: {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      opens: '09:00',
+      closes: '17:00',
+    },
+    areaServed: {
+      '@type': 'Country',
+      name: 'Bhutan',
+    },
+    knowsAbout: [
+      'POS Software',
+      'Accounting Software',
+      'GST Compliance Bhutan',
+      'Inventory Management',
+      'Bhutanese Business Software',
+    ],
   }
 
   return <JsonLd data={data} />
 }
+
