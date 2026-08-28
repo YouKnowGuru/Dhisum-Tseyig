@@ -5,8 +5,8 @@ import FeaturesClient from './FeaturesClient'
 
 export const metadata: Metadata = createMetadata({
   path: '/features',
-  title: 'Features — Double-Entry Accounting, POS, GST compliance',
-  description: 'Explore the complete business management suite of Jinda POS. Features include barcode sales terminal, double-entry accounting, real-time inventory tracking, automatic 5% GST computation, and custom invoicing.',
+  title: 'Jinda POS Features — POS, Accounting, GST, Inventory & More for Bhutan',
+  description: 'Explore 20+ features of Jinda POS — Bhutan\'s best business software. Barcode POS terminal, double-entry accounting, real-time inventory tracking, 5% GST filing, professional invoicing, payroll, mBOB & BNB Pay integration, and cloud backup. All offline.',
   keywords: [
     'Bhutan GST compliance software',
     'Bhutan double entry accounting',
@@ -14,6 +14,17 @@ export const metadata: Metadata = createMetadata({
     'sales dashboard Bhutan',
     'inventory tracker Bhutan',
     'offline billing system Bhutan',
+    'barcode POS Bhutan',
+    'payroll software Bhutan',
+    'cloud backup software Bhutan',
+    'POS features Bhutan',
+    'accounting features Bhutan',
+    'GST return Bhutan software',
+    'multi-user POS Bhutan',
+    'POS software features Thimphu',
+    'POS software features Phuntsholing',
+    'udhaaro ledger Bhutan',
+    'customer ledger software Bhutan',
   ]
 })
 

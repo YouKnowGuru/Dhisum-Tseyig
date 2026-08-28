@@ -5,14 +5,21 @@ import PricingClient from './PricingClient'
 
 export const metadata: Metadata = createMetadata({
   path: '/pricing',
-  title: 'Pricing — POS Plans & 7-Day Free Trial',
-  description: 'View pricing plans for Jinda POS software. A 7-day free trial is available with all features, unlimited products, GST compliance, and local payments support. No credit card required.',
+  title: 'Jinda POS Pricing — Affordable POS & Accounting Plans for Bhutan',
+  description: 'View affordable pricing plans for Jinda POS — Bhutan\'s #1 billing and accounting software. Start with a 7-day free trial, then choose a one-time or annual license from Nu. 3,500. No monthly cloud fees. No credit card required.',
   keywords: [
     'Jinda POS pricing',
     'Bhutan POS cost',
     'accounting software price Bhutan',
     'free trial POS software Bhutan',
     'GST billing software price',
+    'POS software license Bhutan',
+    'affordable POS Bhutan',
+    'cheap billing software Bhutan',
+    'POS software Nu Bhutan',
+    'one time POS license Bhutan',
+    'annual POS license Bhutan',
+    'best value POS Bhutan',
   ]
 })
 

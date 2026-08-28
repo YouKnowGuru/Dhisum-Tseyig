@@ -33,22 +33,39 @@ export function OrganizationJsonLd() {
       addressLocality: 'Damphu',
       addressRegion: 'Tsirang',
     },
-    contactPoint: {
-      '@type': 'ContactPoint',
-      contactType: 'customer support',
-      email: 'dhisumtseyig@gmail.com',
-      url: 'https://jindapos.com/contact',
-      availableLanguage: ['English', 'Dzongkha', 'Nepali'],
-    },
+    contactPoint: [
+      {
+        '@type': 'ContactPoint',
+        contactType: 'customer support',
+        email: 'dhisumtseyig@gmail.com',
+        url: 'https://jindapos.com/contact',
+        availableLanguage: ['English', 'Dzongkha', 'Nepali'],
+      },
+      {
+        '@type': 'ContactPoint',
+        contactType: 'sales',
+        email: 'dhisumtseyig@gmail.com',
+        url: 'https://jindapos.com/pricing',
+      },
+    ],
     areaServed: {
       '@type': 'Country',
       name: 'Bhutan',
     },
-    // TODO: Replace with actual social media URLs
-    sameAs: [
-      // 'https://facebook.com/your-actual-page',
-      // 'https://instagram.com/your-actual-page',
+    knowsAbout: [
+      'Point of Sale Software',
+      'Accounting Software',
+      'GST Compliance Bhutan',
+      'Inventory Management',
+      'Bhutanese Business Software',
+      'Billing Software',
     ],
+    // Add your real social media pages below to boost Google trust score:
+    // sameAs: [
+    //   'https://facebook.com/YOUR_JINDA_PAGE',
+    //   'https://instagram.com/YOUR_JINDA_PAGE',
+    //   'https://www.linkedin.com/company/YOUR_PAGE',
+    // ],
   }
 
   return <JsonLd data={data} />
@@ -195,12 +212,12 @@ export function FAQPageJsonLd({ faqs }: { faqs: { question: string; answer: stri
 export function LocalBusinessJsonLd() {
   const data = {
     '@context': 'https://schema.org',
-    '@type': 'SoftwareCompany',
+    '@type': ['LocalBusiness', 'SoftwareCompany'],
     name: 'Jinda POS',
     url: 'https://jindapos.com',
     logo: 'https://jindapos.com/images/logo.png',
-    image: 'https://jindapos.com/images/logo.png',
-    description: 'Jinda POS is the #1 POS and accounting software provider for Bhutanese businesses. Best Tally alternative in Bhutan with offline operation, GST compliance, and Bhutanese payment support.',
+    image: 'https://jindapos.com/og-image.png',
+    description: 'Jinda POS is the #1 POS and accounting software provider for Bhutanese businesses. Best Tally alternative in Bhutan with offline operation, GST compliance, barcode billing, and Bhutanese payment support (mBOB, BNB Pay, TPay).',
     address: {
       '@type': 'PostalAddress',
       addressCountry: 'BT',
@@ -220,19 +237,24 @@ export function LocalBusinessJsonLd() {
       opens: '09:00',
       closes: '17:00',
     },
-    areaServed: {
-      '@type': 'Country',
-      name: 'Bhutan',
-    },
+    areaServed: [
+      { '@type': 'City', name: 'Thimphu' },
+      { '@type': 'City', name: 'Phuntsholing' },
+      { '@type': 'City', name: 'Paro' },
+      { '@type': 'City', name: 'Gelephu' },
+      { '@type': 'City', name: 'Punakha' },
+      { '@type': 'Country', name: 'Bhutan' },
+    ],
     knowsAbout: [
       'POS Software',
       'Accounting Software',
       'GST Compliance Bhutan',
       'Inventory Management',
+      'Billing Software',
       'Bhutanese Business Software',
+      'Tally Alternative',
     ],
   }
 
   return <JsonLd data={data} />
 }
-

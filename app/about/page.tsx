@@ -5,8 +5,8 @@ import AboutClient from './AboutClient'
 
 export const metadata: Metadata = createMetadata({
   path: '/about',
-  title: 'About Us — The Team Behind Jinda POS',
-  description: 'Learn about Jinda POS, built specifically for Bhutanese small businesses. Read our mission, explore our 20+ features, and meet our founder Keshab Baral.',
+  title: 'About Jinda POS — Bhutan\'s #1 POS & Accounting Software Company',
+  description: 'Jinda POS is built specifically for Bhutanese businesses by developer Keshab Baral from Tsirang, Bhutan. Learn our mission to help every shop in Thimphu, Phuntsholing, Paro, Gelephu, and across Bhutan manage billing, accounting, and GST easily.',
   keywords: [
     'Jinda POS Bhutan',
     'Keshab Baral',
@@ -14,6 +14,14 @@ export const metadata: Metadata = createMetadata({
     'Tsirang Bhutan software',
     'Bhutan POS development team',
     'Bhutan point of sale history',
+    'Bhutan made software',
+    'software company Bhutan',
+    'Bhutanese software developer',
+    'POS company Bhutan',
+    'accounting software company Bhutan',
+    'Damphu Tsirang software',
+    'local software Bhutan',
+    'Bhutan IT company',
   ]
 })
 
