@@ -26,13 +26,47 @@ const registerSchema = z.object({
   isTrial: z.boolean().default(false),
 })
 
-// Simple rate limiting for registration
+// Rate limiting for registration
 const registerAttempts = new Map<string, { count: number; resetTime: number }>()
 
-function checkRegisterRateLimit(identifier: string): { allowed: boolean; retryAfter?: number } {
+function cleanupExpiredAttempts() {
   const now = Date.now()
-  const windowMs = 60 * 60 * 1000 // 1 hour
-  const maxAttempts = 5
+  registerAttempts.forEach((record, key) => {
+    if (now > record.resetTime) {
+      registerAttempts.delete(key)
+    }
+  })
+}
+
+function getClientIp(req: NextRequest): string {
+  const cfIp = req.headers.get('cf-connecting-ip')
+  if (cfIp) return cfIp.trim()
+
+  const forwarded = req.headers.get('x-forwarded-for')
+  if (forwarded) {
+    const parts = forwarded.split(',').map(p => p.trim()).filter(Boolean)
+    if (parts.length > 0) return parts[parts.length - 1]
+  }
+
+  const realIp = req.headers.get('x-real-ip')
+  if (realIp) return realIp.trim()
+
+  return '127.0.0.1'
+}
+
+function checkRegisterRateLimit(identifier: string): { allowed: boolean; retryAfter?: number } {
+  // In development, or for localhost, allow registrations without strict blocking
+  if (process.env.NODE_ENV === 'development' || identifier === '127.0.0.1' || identifier === '::1' || identifier === 'localhost') {
+    return { allowed: true }
+  }
+
+  const now = Date.now()
+  const windowMs = 15 * 60 * 1000 // 15 minutes (was 1 hour)
+  const maxAttempts = 15 // 15 attempts (was 5)
+
+  if (registerAttempts.size > 500) {
+    cleanupExpiredAttempts()
+  }
 
   const record = registerAttempts.get(identifier)
 
@@ -55,7 +89,7 @@ function checkRegisterRateLimit(identifier: string): { allowed: boolean; retryAf
  * Register new user with trial or license flow
  */
 export async function POST(req: NextRequest) {
-  const clientIp = req.headers.get('x-forwarded-for') || 'unknown'
+  const clientIp = getClientIp(req)
   const rateLimitKey = clientIp
 
   try {
@@ -183,6 +217,11 @@ export async function POST(req: NextRequest) {
     console.error('Registration error:', error)
 
     if (error instanceof z.ZodError) {
+      // Don't consume rate limit attempts for form validation errors
+      const record = registerAttempts.get(rateLimitKey)
+      if (record && record.count > 0) {
+        record.count--
+      }
       const errors = error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
       return NextResponse.json(
         { success: false, error: 'Validation failed', errors },

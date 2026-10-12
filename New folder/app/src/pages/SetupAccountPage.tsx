@@ -119,20 +119,51 @@ export function SetupAccountPage({ onAccountCreated, onBack, onShowLogin }: Setu
 
       const srv = await AuthService.register(form.username, form.email, form.password, { deviceId, licenseKey });
       if (!srv.success) {
-        const msg = srv.message || '';
-        const isNet = msg.includes('Unable to reach') || msg.includes('fetch') || msg.includes('network');
-        if (!isNet) {
-          let em = msg || 'Registration failed.';
-          if (msg.toLowerCase().includes('email') && (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists')))
-            em = 'This email is already registered. Try logging in instead.';
-          else if (msg.toLowerCase().includes('username') && (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('taken')))
-            em = 'This username is taken. Please choose a different one.';
-          else if (msg.toLowerCase().includes('account') && msg.toLowerCase().includes('lock'))
-            em = 'Account temporarily locked. Please try again later.';
-          else if (msg.toLowerCase().includes('suspended') || msg.toLowerCase().includes('disabled'))
-            em = 'Account access has been restricted. Contact support.';
-          setErr(em); setBusy(false); return;
+        // FIX: server sends errors in `srv.error`, not `srv.message`
+        const rawMsg = (srv.error || srv.message || '').toLowerCase();
+        const rawErr = srv.error || srv.message || '';
+
+        // Network / offline
+        if (!rawMsg || rawMsg.includes('fetch') || rawMsg.includes('network') || rawMsg.includes('unable to reach') || rawMsg.includes('failed to fetch')) {
+          setErr('Cannot reach the server. Please check your internet connection and try again.');
+          setBusy(false); return;
         }
+
+        // Rate limited (429)
+        if (rawMsg.includes('too many') || rawMsg.includes('rate limit') || rawMsg.includes('try again later')) {
+          const mins = srv.retryAfter ? Math.ceil(srv.retryAfter / 60) : null;
+          setErr(mins
+            ? `Too many registration attempts. Please wait ${mins} minute${mins > 1 ? 's' : ''} before trying again.`
+            : 'Too many registration attempts. Please wait a few minutes before trying again.');
+          setBusy(false); return;
+        }
+
+        // Duplicate account / email / username (409)
+        if (rawMsg.includes('already') || rawMsg.includes('exists') || rawMsg.includes('taken') || rawMsg.includes('in use')) {
+          if (rawMsg.includes('email'))
+            setErr('This email address is already registered. Try signing in instead.');
+          else if (rawMsg.includes('username'))
+            setErr('This username is already taken. Please choose a different one.');
+          else
+            setErr('An account with these details already exists. Try signing in instead.');
+          setBusy(false); return;
+        }
+
+        // Validation errors from server (400)
+        if (rawMsg.includes('validation') || rawMsg.includes('invalid')) {
+          setErr(`Validation error: ${rawErr}`);
+          setBusy(false); return;
+        }
+
+        // Account suspended / locked
+        if (rawMsg.includes('lock') || rawMsg.includes('suspend') || rawMsg.includes('disabled') || rawMsg.includes('restricted')) {
+          setErr('Account access has been restricted. Please contact support.');
+          setBusy(false); return;
+        }
+
+        // Fallback — show the actual server message so user isn't left in the dark
+        setErr(rawErr || 'Registration failed. Please check your details and try again.');
+        setBusy(false); return;
       }
 
       if (window.electronSecureAPI) {
@@ -144,8 +175,17 @@ export function SetupAccountPage({ onAccountCreated, onBack, onShowLogin }: Setu
       }
       setSuccess(true);
       setTimeout(() => onAccountCreated(form.username, form.password, form.email), 1500);
-    } catch { setErr('An unexpected error occurred. Please try again.'); }
-    finally   { setBusy(false); }
+    } catch (caughtErr: any) {
+      // Show actual error message if available
+      const msg = (caughtErr as Error)?.message || '';
+      if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch')) {
+        setErr('Cannot reach the server. Please check your internet connection.');
+      } else {
+        setErr(msg || 'An unexpected error occurred. Please try again.');
+      }
+    } finally {
+      setBusy(false);
+    }
   };
 
   // ── Input helpers ──────────────────────────────────────────────────────────
