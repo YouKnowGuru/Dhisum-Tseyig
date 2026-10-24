@@ -223,9 +223,22 @@ export class AuthService {
       };
     } catch (error: any) {
       console.error('Registration error:', error);
+
+      // The thrown error carries the full server response body in
+      // error.responseData — use it to surface retry info (429) and the
+      // per-field validation messages (400) instead of a generic fallback.
+      const resp = error?.responseData;
+      let msg = error.message || 'Registration failed. Please try again.';
+      if (Array.isArray(resp?.errors) && resp.errors.length > 0) {
+        msg = resp.errors.map((e: any) => `${e.field}: ${e.message}`).join('; ');
+      } else if (resp?.error) {
+        msg = resp.error;
+      }
+
       return {
         success: false,
-        error: error.message || 'Registration failed. Please try again.',
+        error: msg,
+        retryAfter: resp?.retryAfter,
       };
     }
   }

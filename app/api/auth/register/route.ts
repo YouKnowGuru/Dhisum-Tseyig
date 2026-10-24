@@ -42,16 +42,23 @@ function getClientIp(req: NextRequest): string {
   const cfIp = req.headers.get('cf-connecting-ip')
   if (cfIp) return cfIp.trim()
 
-  const forwarded = req.headers.get('x-forwarded-for')
-  if (forwarded) {
-    const parts = forwarded.split(',').map(p => p.trim()).filter(Boolean)
-    if (parts.length > 0) return parts[parts.length - 1]
-  }
-
   const realIp = req.headers.get('x-real-ip')
   if (realIp) return realIp.trim()
 
-  return '127.0.0.1'
+  // BEHIND A CDN/PROXY (hcdn, nginx, etc.) the LAST x-forwarded-for entry is
+  // the edge proxy, not the client. Using it lumps every visitor onto ONE
+  // shared rate-limit bucket, so a single abuser (or our own test loop) locks
+  // out ALL registrations server-wide. Use the FIRST (client) entry instead.
+  const forwarded = req.headers.get('x-forwarded-for')
+  if (forwarded) {
+    const parts = forwarded.split(',').map(p => p.trim()).filter(Boolean)
+    if (parts.length > 0) return parts[0]
+  }
+
+  // NOTE: fallback must NOT be '127.0.0.1' — that value is in the localhost
+  // bypass below and would disable rate limiting entirely for headerless
+  // requests. 'unknown' is a distinct, rate-limited bucket.
+  return 'unknown'
 }
 
 function checkRegisterRateLimit(identifier: string): { allowed: boolean; retryAfter?: number } {
