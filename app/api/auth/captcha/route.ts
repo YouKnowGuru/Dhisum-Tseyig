@@ -158,8 +158,11 @@ export async function POST(req: NextRequest) {
 
 /**
  * Verify captcha internally (for use by other routes)
+ *
+ * NOT exported: Next.js route files may only export HTTP handlers/config;
+ * an extra export breaks the webpack type check (and nothing imports it).
  */
-export function verifyCaptchaInternal(captchaId: string, answer: string): boolean {
+function verifyCaptchaInternal(captchaId: string, answer: string): boolean {
   const stored = captchaStore.get(captchaId)
 
   if (!stored || stored.expiresAt < Date.now()) {
